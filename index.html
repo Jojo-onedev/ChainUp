@@ -1,0 +1,1258 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DiploChain — Registre National de Diplômes sur Blockchain</title>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,600;0,9..144,700;1,9..144,400&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --cream: #F8F6F0;
+      --white: #FFFFFF;
+      --green: #1A6B47;
+      --green-light: #2A8B5E;
+      --green-pale: #E8F5EE;
+      --gold: #C9921A;
+      --gold-light: #F0C853;
+      --gold-pale: #FDF5E0;
+      --dark: #1C1C1C;
+      --mid: #4A4A4A;
+      --muted: #888;
+      --border: #DDD8CC;
+      --red: #C0392B;
+      --red-pale: #FDECEA;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Fraunces', Georgia, serif;
+      background: var(--cream);
+      color: var(--dark);
+      line-height: 1.7;
+    }
+
+    /* ── NAV ── */
+    nav {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 100;
+      background: rgba(248, 246, 240, 0.95);
+      backdrop-filter: blur(8px);
+      border-bottom: 1px solid var(--border);
+      padding: 0 2rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 64px;
+    }
+
+    .nav-logo {
+      font-family: 'Space Mono', monospace;
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--green);
+      letter-spacing: -0.02em;
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .nav-logo span {
+      display: inline-block;
+      width: 8px; height: 8px;
+      background: var(--gold);
+      border-radius: 50%;
+    }
+
+    .nav-links {
+      display: flex;
+      gap: 2rem;
+      list-style: none;
+    }
+
+    .nav-links a {
+      font-family: 'Space Mono', monospace;
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--mid);
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+
+    .nav-links a:hover { color: var(--green); }
+
+    .nav-cta {
+      font-family: 'Space Mono', monospace;
+      font-size: 0.72rem;
+      background: var(--green);
+      color: white;
+      padding: 0.5rem 1.2rem;
+      border-radius: 2px;
+      text-decoration: none;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      transition: background 0.2s;
+    }
+    .nav-cta:hover { background: var(--green-light); }
+
+    /* ── HERO ── */
+    #accueil {
+      min-height: 100vh;
+      padding: 120px 2rem 80px;
+      display: flex;
+      align-items: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero-grid-bg {
+      position: absolute;
+      inset: 0;
+      background-image:
+        linear-gradient(to right, rgba(26,107,71,0.04) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(26,107,71,0.04) 1px, transparent 1px);
+      background-size: 60px 60px;
+      pointer-events: none;
+    }
+
+    .hero-corner {
+      position: absolute;
+      bottom: 60px; right: 80px;
+      width: 320px; height: 320px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(201,146,26,0.12) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    .hero-inner {
+      max-width: 900px;
+      margin: 0 auto;
+      position: relative;
+    }
+
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-family: 'Space Mono', monospace;
+      font-size: 0.7rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--green);
+      background: var(--green-pale);
+      border: 1px solid rgba(26,107,71,0.2);
+      padding: 0.4rem 1rem;
+      border-radius: 2px;
+      margin-bottom: 2rem;
+    }
+
+    .hero-badge::before {
+      content: '';
+      display: inline-block;
+      width: 6px; height: 6px;
+      background: var(--green);
+      border-radius: 50%;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.5; transform: scale(0.7); }
+    }
+
+    h1 {
+      font-size: clamp(2.8rem, 6vw, 5rem);
+      font-weight: 700;
+      line-height: 1.1;
+      letter-spacing: -0.02em;
+      margin-bottom: 1.5rem;
+      color: var(--dark);
+    }
+
+    h1 em {
+      font-style: italic;
+      color: var(--green);
+    }
+
+    .hero-sub {
+      font-size: 1.2rem;
+      color: var(--mid);
+      max-width: 600px;
+      margin-bottom: 2.5rem;
+      font-weight: 300;
+      line-height: 1.8;
+    }
+
+    .hero-stats {
+      display: flex;
+      gap: 3rem;
+      margin-top: 3rem;
+      padding-top: 2rem;
+      border-top: 1px solid var(--border);
+      flex-wrap: wrap;
+    }
+
+    .stat-item { }
+
+    .stat-num {
+      font-family: 'Space Mono', monospace;
+      font-size: 2rem;
+      font-weight: 700;
+      color: var(--gold);
+      line-height: 1;
+    }
+
+    .stat-label {
+      font-size: 0.8rem;
+      color: var(--muted);
+      margin-top: 0.3rem;
+      line-height: 1.4;
+    }
+
+    .hero-btns {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .btn-primary {
+      font-family: 'Space Mono', monospace;
+      font-size: 0.8rem;
+      background: var(--green);
+      color: white;
+      padding: 0.9rem 2rem;
+      border-radius: 2px;
+      text-decoration: none;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      transition: background 0.2s, transform 0.1s;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.6rem;
+    }
+    .btn-primary:hover { background: var(--green-light); transform: translateY(-1px); }
+
+    .btn-secondary {
+      font-family: 'Space Mono', monospace;
+      font-size: 0.8rem;
+      background: transparent;
+      color: var(--green);
+      padding: 0.9rem 2rem;
+      border-radius: 2px;
+      border: 1.5px solid var(--green);
+      text-decoration: none;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      transition: all 0.2s;
+    }
+    .btn-secondary:hover { background: var(--green-pale); }
+
+    /* ── SECTIONS COMMUNES ── */
+    section {
+      padding: 100px 2rem;
+    }
+
+    .section-inner {
+      max-width: 960px;
+      margin: 0 auto;
+    }
+
+    .section-label {
+      font-family: 'Space Mono', monospace;
+      font-size: 0.68rem;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--gold);
+      margin-bottom: 1rem;
+    }
+
+    h2 {
+      font-size: clamp(2rem, 4vw, 3rem);
+      font-weight: 700;
+      line-height: 1.15;
+      letter-spacing: -0.02em;
+      margin-bottom: 1.5rem;
+    }
+
+    h2 em {
+      font-style: italic;
+      color: var(--green);
+    }
+
+    .section-intro {
+      font-size: 1.05rem;
+      color: var(--mid);
+      max-width: 640px;
+      line-height: 1.8;
+      margin-bottom: 3rem;
+      font-weight: 300;
+    }
+
+    /* ── PROBLÈME ── */
+    #probleme {
+      background: var(--white);
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .problem-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 2px;
+      background: var(--border);
+      border: 1px solid var(--border);
+      margin-bottom: 3rem;
+    }
+
+    .problem-card {
+      background: var(--white);
+      padding: 2rem;
+    }
+
+    .problem-card-icon {
+      font-size: 1.8rem;
+      margin-bottom: 1rem;
+    }
+
+    .problem-card h3 {
+      font-size: 1.1rem;
+      font-weight: 600;
+      margin-bottom: 0.75rem;
+      color: var(--dark);
+    }
+
+    .problem-card p {
+      font-size: 0.9rem;
+      color: var(--mid);
+      line-height: 1.7;
+      font-family: 'Space Mono', monospace;
+      font-weight: 400;
+    }
+
+    .incident-strip {
+      background: var(--red-pale);
+      border-left: 3px solid var(--red);
+      padding: 1.5rem 2rem;
+      border-radius: 0 2px 2px 0;
+    }
+
+    .incident-strip p {
+      font-size: 0.88rem;
+      color: #7a2020;
+      line-height: 1.8;
+    }
+
+    .incident-strip strong {
+      color: var(--red);
+      font-family: 'Space Mono', monospace;
+      font-size: 0.8rem;
+      display: block;
+      margin-bottom: 0.5rem;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+
+    /* ── SOLUTION ── */
+    #solution {
+      background: var(--green);
+      color: white;
+    }
+
+    #solution .section-label {
+      color: var(--gold-light);
+    }
+
+    #solution h2 { color: white; }
+    #solution h2 em { color: var(--gold-light); }
+    #solution .section-intro { color: rgba(255,255,255,0.75); }
+
+    .solution-cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 1px;
+      background: rgba(255,255,255,0.1);
+      border: 1px solid rgba(255,255,255,0.1);
+    }
+
+    .sol-card {
+      background: rgba(255,255,255,0.06);
+      padding: 2rem;
+      transition: background 0.2s;
+    }
+    .sol-card:hover { background: rgba(255,255,255,0.12); }
+
+    .sol-card-tag {
+      font-family: 'Space Mono', monospace;
+      font-size: 0.65rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--gold-light);
+      margin-bottom: 0.75rem;
+    }
+
+    .sol-card h3 {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: white;
+      margin-bottom: 0.75rem;
+    }
+
+    .sol-card p {
+      font-size: 0.88rem;
+      color: rgba(255,255,255,0.7);
+      line-height: 1.7;
+    }
+
+    .skillbadge-block {
+      margin-top: 3rem;
+      background: rgba(201,146,26,0.12);
+      border: 1px solid rgba(201,146,26,0.3);
+      padding: 2rem;
+      display: flex;
+      align-items: flex-start;
+      gap: 1.5rem;
+    }
+
+    .skillbadge-icon {
+      font-size: 2.5rem;
+      flex-shrink: 0;
+    }
+
+    .skillbadge-block h3 {
+      font-size: 1.1rem;
+      color: var(--gold-light);
+      margin-bottom: 0.5rem;
+    }
+
+    .skillbadge-block p {
+      font-size: 0.9rem;
+      color: rgba(255,255,255,0.75);
+      line-height: 1.7;
+    }
+
+    /* ── COMMENT ÇA MARCHE ── */
+    #fonctionnement {
+      background: var(--cream);
+    }
+
+    .steps {
+      counter-reset: step;
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+    }
+
+    .step {
+      display: grid;
+      grid-template-columns: 64px 1fr;
+      gap: 2rem;
+      padding: 2.5rem 0;
+      border-bottom: 1px solid var(--border);
+      align-items: start;
+    }
+
+    .step:last-child { border-bottom: none; }
+
+    .step-num {
+      font-family: 'Space Mono', monospace;
+      font-size: 0.7rem;
+      letter-spacing: 0.08em;
+      color: var(--muted);
+      padding-top: 0.25rem;
+    }
+
+    .step-content h3 {
+      font-size: 1.15rem;
+      font-weight: 600;
+      margin-bottom: 0.75rem;
+      color: var(--dark);
+    }
+
+    .step-content p {
+      font-size: 0.92rem;
+      color: var(--mid);
+      line-height: 1.8;
+    }
+
+    .step-content code {
+      font-family: 'Space Mono', monospace;
+      font-size: 0.8rem;
+      background: var(--green-pale);
+      color: var(--green);
+      padding: 0.1em 0.4em;
+      border-radius: 2px;
+    }
+
+    .impossible-block {
+      margin-top: 3rem;
+      background: var(--gold-pale);
+      border: 1px solid rgba(201,146,26,0.2);
+      padding: 2rem;
+    }
+
+    .impossible-block h3 {
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--dark);
+      margin-bottom: 0.75rem;
+    }
+
+    .impossible-block p {
+      font-size: 0.9rem;
+      color: var(--mid);
+      line-height: 1.8;
+    }
+
+    /* ── PORTAIL ── */
+    #portail {
+      background: var(--dark);
+      color: white;
+    }
+
+    #portail .section-label { color: var(--gold-light); }
+    #portail h2 { color: white; }
+    #portail h2 em { color: var(--gold-light); }
+    #portail .section-intro { color: rgba(255,255,255,0.6); }
+
+    .verify-widget {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.1);
+      padding: 2.5rem;
+      max-width: 620px;
+      margin: 0 auto 3rem;
+    }
+
+    .verify-widget h3 {
+      font-family: 'Space Mono', monospace;
+      font-size: 0.75rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--gold-light);
+      margin-bottom: 1.5rem;
+    }
+
+    .verify-input-row {
+      display: flex;
+      gap: 0;
+    }
+
+    .verify-input {
+      flex: 1;
+      background: rgba(255,255,255,0.07);
+      border: 1px solid rgba(255,255,255,0.15);
+      border-right: none;
+      color: white;
+      padding: 0.85rem 1.2rem;
+      font-family: 'Space Mono', monospace;
+      font-size: 0.82rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .verify-input:focus {
+      border-color: var(--green-light);
+    }
+
+    .verify-input::placeholder { color: rgba(255,255,255,0.3); }
+
+    .verify-btn {
+      background: var(--green);
+      color: white;
+      border: none;
+      padding: 0 1.6rem;
+      font-family: 'Space Mono', monospace;
+      font-size: 0.78rem;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: background 0.2s;
+      white-space: nowrap;
+    }
+
+    .verify-btn:hover { background: var(--green-light); }
+
+    .demo-btns {
+      display: flex;
+      gap: 1rem;
+      margin-top: 1.5rem;
+      flex-wrap: wrap;
+    }
+
+    .demo-btn {
+      font-family: 'Space Mono', monospace;
+      font-size: 0.72rem;
+      padding: 0.5rem 1rem;
+      border: 1px solid rgba(255,255,255,0.15);
+      background: transparent;
+      color: rgba(255,255,255,0.6);
+      cursor: pointer;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      transition: all 0.2s;
+      border-radius: 2px;
+    }
+
+    .demo-btn:hover { border-color: var(--gold-light); color: var(--gold-light); }
+    .demo-btn.valid { border-color: var(--green-light); color: var(--green-light); }
+    .demo-btn.invalid { border-color: #e74c3c; color: #e74c3c; }
+
+    .verify-result {
+      margin-top: 1.5rem;
+      padding: 1.2rem 1.5rem;
+      border-radius: 2px;
+      display: none;
+      animation: fadeIn 0.3s ease;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .verify-result.success {
+      background: rgba(26,107,71,0.2);
+      border: 1px solid rgba(26,107,71,0.4);
+    }
+
+    .verify-result.error {
+      background: rgba(192,57,43,0.15);
+      border: 1px solid rgba(192,57,43,0.4);
+    }
+
+    .verify-result.scanning {
+      background: rgba(201,146,26,0.1);
+      border: 1px solid rgba(201,146,26,0.3);
+    }
+
+    .result-header {
+      display: flex;
+      align-items: center;
+      gap: 0.8rem;
+      margin-bottom: 0.75rem;
+    }
+
+    .result-dot {
+      width: 10px; height: 10px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .result-dot.green { background: #2ecc71; }
+    .result-dot.red { background: #e74c3c; }
+    .result-dot.gold { background: var(--gold-light); animation: pulse 1s infinite; }
+
+    .result-label {
+      font-family: 'Space Mono', monospace;
+      font-size: 0.75rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .result-label.green { color: #2ecc71; }
+    .result-label.red { color: #e74c3c; }
+    .result-label.gold { color: var(--gold-light); }
+
+    .result-data {
+      font-size: 0.88rem;
+      color: rgba(255,255,255,0.75);
+      line-height: 1.8;
+    }
+
+    .result-data strong {
+      color: white;
+      font-weight: 600;
+    }
+
+    /* Scan animation */
+    .scan-line {
+      position: relative;
+      overflow: hidden;
+      height: 3px;
+      background: rgba(255,255,255,0.05);
+      margin-bottom: 1rem;
+    }
+
+    .scan-line::after {
+      content: '';
+      position: absolute;
+      top: 0; left: -100%;
+      width: 100%; height: 100%;
+      background: linear-gradient(to right, transparent, var(--gold-light), transparent);
+      animation: scan 1.5s linear;
+    }
+
+    @keyframes scan {
+      from { left: -100%; }
+      to { left: 100%; }
+    }
+
+    .verify-methods {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1px;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.06);
+      max-width: 620px;
+      margin: 0 auto;
+    }
+
+    .method-card {
+      background: rgba(255,255,255,0.02);
+      padding: 1.5rem;
+      text-align: center;
+    }
+
+    .method-card-icon { font-size: 1.5rem; margin-bottom: 0.75rem; }
+
+    .method-card h4 {
+      font-family: 'Space Mono', monospace;
+      font-size: 0.72rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: white;
+      margin-bottom: 0.5rem;
+    }
+
+    .method-card p {
+      font-size: 0.82rem;
+      color: rgba(255,255,255,0.5);
+      line-height: 1.6;
+    }
+
+    /* ── FOOTER ── */
+    footer {
+      background: var(--dark);
+      border-top: 1px solid rgba(255,255,255,0.08);
+      padding: 3rem 2rem;
+      text-align: center;
+      color: rgba(255,255,255,0.4);
+      font-family: 'Space Mono', monospace;
+      font-size: 0.75rem;
+    }
+
+    footer a { color: var(--green-light); text-decoration: none; }
+
+    .footer-logo {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: white;
+      margin-bottom: 1rem;
+      letter-spacing: -0.02em;
+    }
+
+    .footer-logo span { color: var(--gold); }
+
+    /* ── HAMBURGER ── */
+    .nav-toggle {
+      display: none;
+      background: none;
+      border: none;
+      font-size: 1.4rem;
+      cursor: pointer;
+      color: var(--green);
+      padding: 0.2rem 0.4rem;
+      line-height: 1;
+    }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 700px) {
+      .problem-grid { grid-template-columns: 1fr; }
+      .hero-stats { gap: 1.5rem; }
+      .step { grid-template-columns: 1fr; gap: 0.5rem; }
+      .step-num { font-size: 0.65rem; }
+      nav { padding: 0 1rem; }
+      .nav-cta { display: none; }
+      .nav-toggle { display: block; }
+
+      .nav-links {
+        display: none;
+        position: absolute;
+        top: 64px; left: 0; right: 0;
+        background: rgba(248,246,240,0.98);
+        backdrop-filter: blur(8px);
+        border-bottom: 1px solid var(--border);
+        flex-direction: column;
+        padding: 1.2rem 2rem 1.5rem;
+        gap: 1rem;
+        box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+      }
+      .nav-links.open { display: flex; }
+      .nav-links a { font-size: 0.85rem; }
+
+      .verify-input-row { flex-direction: column; }
+      .verify-btn { width: 100%; padding: 0.85rem; }
+      .verify-input { border-right: 1px solid rgba(255,255,255,0.15); border-bottom: none; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ══════════════ NAV ══════════════ -->
+<nav>
+  <a href="#accueil" class="nav-logo"><span></span>DiploChain</a>
+  <button class="nav-toggle" onclick="toggleNav()" aria-label="Ouvrir le menu de navigation">☰</button>
+  <ul class="nav-links" id="navLinks">
+    <li><a href="#probleme" onclick="closeNav()">Le Problème</a></li>
+    <li><a href="#solution" onclick="closeNav()">La Solution</a></li>
+    <li><a href="#fonctionnement" onclick="closeNav()">Fonctionnement</a></li>
+    <li><a href="#portail" onclick="closeNav()">Portail</a></li>
+  </ul>
+  <a href="#portail" class="nav-cta">Vérifier un diplôme →</a>
+</nav>
+
+
+<!-- ══════════════ HERO ══════════════ -->
+<section id="accueil">
+  <div class="hero-grid-bg"></div>
+  <div class="hero-corner"></div>
+  <div class="hero-inner">
+    <div class="hero-badge">Burkina Faso · Hackathon Miabe 2026 · Projet BF-01</div>
+    <h1>Le registre national de diplômes <em>infalsifiable</em></h1>
+    <p class="hero-sub">
+      Un diplôme vérifié en moins de trois secondes. Un faux diplôme rejeté immédiatement.
+      Sans intermédiaire, sans frais, depuis n'importe où dans le monde.
+    </p>
+    <div class="hero-btns">
+      <a href="#portail" class="btn-primary">Vérifier un diplôme →</a>
+      <a href="#solution" class="btn-secondary">Découvrir DiploChain</a>
+    </div>
+    <div class="hero-stats">
+      <div class="stat-item">
+        <div class="stat-num">25–30%</div>
+        <div class="stat-label">des diplômes présentés aux<br>concours publics sont estimés falsifiés</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-num">6 000+</div>
+        <div class="stat-label">dossiers examinés par<br>l'opération KORAG (2025)</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-num">&lt; 3 s</div>
+        <div class="stat-label">pour vérifier<br>n'importe quel diplôme</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ══════════════ PROBLÈME ══════════════ -->
+<section id="probleme">
+  <div class="section-inner">
+    <p class="section-label">Le Problème</p>
+    <h2>La fraude aux diplômes :<br><em>une crise de sécurité publique</em></h2>
+    <p class="section-intro">
+      Au Burkina Faso, la fraude aux diplômes n'est pas un risque théorique.
+      C'est une réalité documentée, aux conséquences directes sur la santé, l'éducation et la sécurité des citoyens.
+    </p>
+
+    <div class="problem-grid">
+      <div class="problem-card">
+        <div class="problem-card-icon">⚠️</div>
+        <h3>Une fraude massive et documentée</h3>
+        <p>Entre 25 et 30 % des diplômes présentés aux concours de la Fonction publique sont estimés falsifiés. Le 4 septembre 2025, le Conseil des ministres a révoqué 21 agents publics pour faux diplômes, issus de 9 ministères différents.</p>
+      </div>
+      <div class="problem-card">
+        <div class="problem-card-icon">🏥</div>
+        <h3>Des conséquences concrètes et graves</h3>
+        <p>Des médecins sans formation au bloc opératoire. Des enseignants sans qualification en classe. Des agents de sécurité incompétents en poste. La fraude aux diplômes menace directement la vie des citoyens.</p>
+      </div>
+      <div class="problem-card">
+        <div class="problem-card-icon">🐌</div>
+        <h3>Un système de vérification à l'arrêt</h3>
+        <p>Vérifier un diplôme aujourd'hui, c'est contacter manuellement l'établissement. La démarche prend 15 à 30 jours, coûte 20 000 à 50 000 FCFA — sans garantie de résultat. Aucun outil commun, aucun registre centralisé.</p>
+      </div>
+      <div class="problem-card">
+        <div class="problem-card-icon">🔄</div>
+        <h3>Des mesures curatives, jamais préventives</h3>
+        <p>L'opération KORAG a examiné plus de 6 000 dossiers de fonctionnaires — et l'opération se poursuit. Ces révocations interviennent après coup, parfois des années après la fraude. Il faut rendre la fraude structurellement impossible.</p>
+      </div>
+    </div>
+
+    <div class="incident-strip">
+      <strong>📋 Incidents officiels documentés</strong>
+      <p>
+        <strong>4 septembre 2025 :</strong> Le Conseil des ministres révoque 21 agents publics pour faux diplômes — 9 ministères concernés.
+        <strong>11 septembre 2025 :</strong> 4 nouvelles révocations confirment que le phénomène est systémique.
+        L'opération KORAG a ouvert l'examen de plus de 6 000 dossiers de fonctionnaires, dont la vérification est toujours en cours.
+        Des cas de faux médecins en exercice ont été documentés, mettant en danger direct des vies humaines.
+      </p>
+    </div>
+  </div>
+</section>
+
+
+<!-- ══════════════ SOLUTION ══════════════ -->
+<section id="solution">
+  <div class="section-inner">
+    <p class="section-label">La Solution DiploChain</p>
+    <h2>Un registre national <em>infalsifiable</em>,<br>instantané, universel</h2>
+    <p class="section-intro">
+      DiploChain inscrit chaque diplôme sur une blockchain : un registre décentralisé,
+      immuable, lisible par tous et modifiable par personne.
+      Trois acteurs, un seul système, zéro fraude possible.
+    </p>
+
+    <div class="solution-cards">
+      <div class="sol-card">
+        <div class="sol-card-tag">Pour les établissements</div>
+        <h3>Émettre en toute sécurité</h3>
+        <p>
+          Chaque établissement accrédité reçoit une paire de clés cryptographiques.
+          Il émet les diplômes en les signant avec sa clé privée — une preuve mathématique
+          d'authenticité. Sans cette clé, aucune signature valide n'est possible.
+        </p>
+      </div>
+      <div class="sol-card">
+        <div class="sol-card-tag">Pour les diplômés</div>
+        <h3>Partager depuis son téléphone</h3>
+        <p>
+          À l'émission, le diplômé reçoit un certificat DiploChain avec un QR code
+          et un identifiant unique. Il peut le partager avec tout recruteur ou ambassade,
+          depuis son téléphone, depuis n'importe quel pays. Aucune démarche administrative.
+        </p>
+      </div>
+      <div class="sol-card">
+        <div class="sol-card-tag">Pour les recruteurs</div>
+        <h3>Vérifier en moins de 3 secondes</h3>
+        <p>
+          Scanner le QR code, ouvrir le lien de profil public, ou saisir l'identifiant
+          dans le portail. Dans les trois cas, le résultat s'affiche en moins de 3 secondes.
+          Aucune inscription requise. Vérification gratuite et publique.
+        </p>
+      </div>
+    </div>
+
+    <div class="skillbadge-block">
+      <div class="skillbadge-icon">🏅</div>
+      <div>
+        <h3>SkillBadge — Reconnaître les autodidactes</h3>
+        <p>
+          Plus de 15 000 jeunes burkinabè se forment chaque année au numérique sans aucune
+          certification reconnue. Le module SkillBadge DiploChain leur permet d'obtenir des badges
+          blockchain vérifiables, attestant de compétences réelles. Même mécanisme, même niveau
+          d'infalsifiabilité que les diplômes classiques.
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ══════════════ FONCTIONNEMENT ══════════════ -->
+<section id="fonctionnement">
+  <div class="section-inner">
+    <p class="section-label">Comment ça marche ?</p>
+    <h2>La technologie,<br><em>expliquée simplement</em></h2>
+    <p class="section-intro">
+      DiploChain repose sur deux primitives cryptographiques éprouvées : le hachage SHA-256
+      et la signature ECDSA. Ensemble, elles garantissent que chaque diplôme est authentique,
+      intègre, et émis par un établissement légitime — sans jamais faire confiance à un tiers.
+    </p>
+
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">01 —<br>ÉMISSION</div>
+        <div class="step-content">
+          <h3>L'établissement saisit et signe</h3>
+          <p>
+            L'établissement accrédité remplit le formulaire DiploChain avec les données du diplôme
+            (nom, spécialité, date, mention). L'algorithme <code>SHA-256</code> calcule une empreinte
+            numérique unique — si un seul caractère est modifié, l'empreinte est entièrement différente.
+            L'établissement signe cette empreinte avec sa clé privée via <code>ECDSA</code>.
+          </p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">02 —<br>INSCRIPTION</div>
+        <div class="step-content">
+          <h3>Enregistrement immuable sur la blockchain</h3>
+          <p>
+            L'empreinte et la signature sont inscrites de façon permanente sur la blockchain.
+            Personne ne peut les modifier après coup — pas même DiploChain.
+            Un QR code et un identifiant unique sont générés pour le diplômé.
+          </p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">03 —<br>VÉRIFICATION</div>
+        <div class="step-content">
+          <h3>Trois contrôles automatiques en moins de 3 secondes</h3>
+          <p>
+            Quand un recruteur scanne le QR code ou entre un identifiant, DiploChain effectue
+            trois vérifications simultanées : il <strong>recalcule l'empreinte</strong> des données
+            affichées et la compare à celle sur la blockchain (intégrité), il <strong>vérifie la signature</strong>
+            par rapport à la clé publique de l'établissement (authenticité), et contrôle que
+            <strong>l'établissement est accrédité</strong> (légitimité). Si les trois passent : vert.
+            Si l'une échoue : rejet immédiat.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <div class="impossible-block">
+      <h3>🔒 Pourquoi il est impossible de créer un faux diplôme</h3>
+      <p>
+        Pour tromper DiploChain, un fraudeur devrait à la fois <strong>connaître la clé privée
+        de l'établissement</strong> — mathématiquement impossible à deviner — et
+        <strong>modifier la blockchain</strong>, ce qui nécessiterait de contrôler plus de 51 %
+        des nœuds du réseau mondial. En pratique, aucun des deux scénarios n'est réalisable.
+        DiploChain ne repose pas sur la confiance : il repose sur les mathématiques.
+      </p>
+    </div>
+  </div>
+</section>
+
+
+<!-- ══════════════ PORTAIL ══════════════ -->
+<section id="portail">
+  <div class="section-inner">
+    <p class="section-label">Portail de Vérification</p>
+    <h2>Vérifiez un diplôme<br><em>en quelques secondes</em></h2>
+    <p class="section-intro">
+      Aucune inscription. Aucun frais. Entrez l'identifiant unique du diplôme —
+      le système interroge directement la blockchain et affiche le résultat immédiatement.
+    </p>
+
+    <div class="verify-widget">
+      <h3>▸ Portail de vérification DiploChain</h3>
+
+      <div class="verify-input-row">
+        <input
+          type="text"
+          class="verify-input"
+          id="verifyInput"
+          placeholder="Entrez un identifiant de diplôme..."
+        />
+        <button class="verify-btn" onclick="runVerify()">Vérifier →</button>
+      </div>
+
+      <div class="demo-btns">
+        <button class="demo-btn valid" onclick="loadDemo('valid')" role="button">
+          ✓ Tester un vrai diplôme
+        </button>
+        <button class="demo-btn invalid" onclick="loadDemo('invalid')" role="button">
+          ✗ Tester un faux diplôme
+        </button>
+      </div>
+
+      <div class="verify-result" id="verifyResult" aria-live="polite"></div>
+      <p style="margin-top:1rem;font-family:'Space Mono',monospace;font-size:0.7rem;opacity:0.45;text-align:center;">
+        Les noms, identifiants et données affichés sont fictifs et utilisés uniquement pour la démonstration.
+      </p>
+    </div>
+
+    <div class="verify-methods">
+      <div class="method-card">
+        <div class="method-card-icon">📱</div>
+        <h4>QR Code</h4>
+        <p>Le diplômé présente son certificat, le recruteur scanne depuis son smartphone. Résultat immédiat.</p>
+      </div>
+      <div class="method-card">
+        <div class="method-card-icon">🔗</div>
+        <h4>Lien public</h4>
+        <p>Chaque diplômé dispose d'une URL publique affichant tous ses diplômes vérifiés.</p>
+      </div>
+      <div class="method-card">
+        <div class="method-card-icon">⌨️</div>
+        <h4>Saisie directe</h4>
+        <p>Entrez l'identifiant unique dans le portail. La blockchain retourne le résultat instantanément.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ══════════════ FOOTER ══════════════ -->
+<footer>
+  <div class="footer-logo">Diplo<span>Chain</span></div>
+  <p>Registre national de diplômes sur blockchain · Burkina Faso</p>
+  <p style="margin-top:0.75rem;">
+    Hackathon Miabe 2026 · Projet D04 – BF-01 ·
+    <a href="https://diplochain-site-vitrine.onrender.com" target="_blank">Site Phase 1</a>
+  </p>
+</footer>
+
+
+<script>
+  // ════════════════════════════════════════════════════════
+  // BASE DE DONNÉES SIMULÉE — Registre DiploChain (démo)
+  // Chaque entrée représente un diplôme enregistré sur la
+  // blockchain. En production, ces données seraient
+  // récupérées depuis un nœud blockchain en temps réel.
+  // ════════════════════════════════════════════════════════
+  const REGISTRE = {
+    'DC-2024-BF-UO-028471': {
+      titulaire:      'Aminata Ouédraogo',
+      diplome:        'Licence en Informatique et Systèmes',
+      etablissement:  'Université Joseph Ki-Zerbo, Ouagadougou',
+      date:           '15 juin 2024',
+      mention:        'Assez Bien',
+      hash:           'a3f8c2d1e9b047f6a1d3e8c9b2f47a0e1d8c3f92',
+    },
+    'DC-2023-BF-USTA-014803': {
+      titulaire:      'Ibrahima Kaboré',
+      diplome:        'Master en Génie Civil',
+      etablissement:  'Université St-Thomas d\'Aquin, Ouagadougou',
+      date:           '22 novembre 2023',
+      mention:        'Bien',
+      hash:           'b7d2a1f4e8c039b5d2f6a9e1c3b80f4d7e2a19c5',
+    },
+    'DC-2024-BF-INP-037920': {
+      titulaire:      'Fatoumata Sawadogo',
+      diplome:        'BTS en Comptabilité et Gestion',
+      etablissement:  'Institut National Polytechnique Houphouët-Boigny, Ouaga',
+      date:           '8 juillet 2024',
+      mention:        'Très Bien',
+      hash:           'c9e4b3d7f10a52c8e3a6b0d4f9c21b7e5a3d08f1',
+    },
+    'DC-2022-BF-UJKZ-009154': {
+      titulaire:      'Moussa Traoré',
+      diplome:        'Doctorat en Médecine',
+      etablissement:  'UFR Sciences de la Santé, Université Joseph Ki-Zerbo',
+      date:           '14 mars 2022',
+      mention:        'Mention Honorable',
+      hash:           'd2f7c0e5b9a43d1f8c2e6b3a7f05d9c1e4b82a0f',
+    },
+    'DC-2024-BF-ENSP-051237': {
+      titulaire:      'Raïssa Compaoré',
+      diplome:        'Diplôme d\'Ingénieur en Informatique',
+      etablissement:  'École Nationale Supérieure Polytechnique, Ouagadougou',
+      date:           '30 septembre 2024',
+      mention:        'Bien',
+      hash:           'e5a1d8f3c6b0e94f2a7d1c3b8f62e0a5d9c4b71e',
+    },
+    'DC-2023-BF-ENSK-022688': {
+      titulaire:      'Oumarou Zongo',
+      diplome:        'Licence en Droit Public',
+      etablissement:  'Université Nazi Boni, Bobo-Dioulasso',
+      date:           '3 février 2023',
+      mention:        'Passable',
+      hash:           'f0c3e6a9d2b57f1c4e8a0d5b3c9f21e7a4d6b08c',
+    },
+  };
+
+  // Identifiants par défaut pour les boutons de démo
+  const DEMO_VALIDE   = 'DC-2024-BF-UO-028471';
+  const DEMO_INVALIDE = 'DC-2025-XX-FAUX-00000';
+
+  // ── Rendu d'un résultat VALIDE ──
+  function htmlValide(id, d) {
+    return `
+      <div class="scan-line"></div>
+      <div class="result-header">
+        <div class="result-dot green"></div>
+        <div class="result-label green">DIPLÔME AUTHENTIQUE — VÉRIFIÉ SUR BLOCKCHAIN</div>
+      </div>
+      <div class="result-data">
+        <strong>Identifiant :</strong> <span style="font-family:monospace;font-size:0.8rem">${id}</span><br>
+        <strong>Titulaire :</strong> ${d.titulaire}<br>
+        <strong>Diplôme :</strong> ${d.diplome}<br>
+        <strong>Établissement :</strong> ${d.etablissement}<br>
+        <strong>Date d'émission :</strong> ${d.date}<br>
+        <strong>Mention :</strong> ${d.mention}<br>
+        <strong>Hash SHA-256 :</strong> <span style="font-family:monospace;font-size:0.72rem;opacity:0.55">${d.hash.slice(0,20)}…</span><br>
+        <strong>Signature ECDSA :</strong> ✓ Valide &nbsp;·&nbsp; <strong>Établissement accrédité :</strong> ✓ Confirmé
+      </div>
+    `;
+  }
+
+  // ── Rendu d'un résultat INVALIDE ──
+  function htmlInvalide(id) {
+    return `
+      <div class="scan-line"></div>
+      <div class="result-header">
+        <div class="result-dot red"></div>
+        <div class="result-label red">DIPLÔME INVALIDE — REJETÉ IMMÉDIATEMENT</div>
+      </div>
+      <div class="result-data">
+        <strong>Identifiant recherché :</strong> <span style="font-family:monospace;font-size:0.8rem">${id}</span><br>
+        Cet identifiant n'existe dans aucun bloc du registre DiploChain.<br>
+        Ce diplôme n'a jamais été émis par un établissement accrédité.<br>
+        <span style="opacity:0.45;font-size:0.78rem;">Signature ECDSA : ✗ Invalide · Hash : aucune correspondance trouvée</span>
+      </div>
+    `;
+  }
+
+  // ── Boutons de démo ──
+  function loadDemo(type) {
+    const id = (type === 'valid') ? DEMO_VALIDE : DEMO_INVALIDE;
+    document.getElementById('verifyInput').value = id;
+    runVerify();
+  }
+
+  // ── Vérification principale ──
+  function runVerify() {
+    const input  = document.getElementById('verifyInput').value.trim();
+    const result = document.getElementById('verifyResult');
+    if (!input) {
+      result.className = 'verify-result error';
+      result.style.display = 'block';
+      result.innerHTML = `
+        <div class="result-header">
+          <div class="result-dot red"></div>
+          <div class="result-label red">AUCUN IDENTIFIANT SAISI</div>
+        </div>
+        <div class="result-data">
+          Veuillez entrer un identifiant de diplôme ou utiliser l'un des scénarios de démo ci-dessus.
+        </div>
+      `;
+      return;
+    }
+
+    // État "scan en cours"
+    result.className   = 'verify-result scanning';
+    result.style.display = 'block';
+    result.innerHTML   = `
+      <div class="scan-line"></div>
+      <div class="result-header">
+        <div class="result-dot gold"></div>
+        <div class="result-label gold">Interrogation de la blockchain en cours…</div>
+      </div>
+      <div class="result-data" style="opacity:0.5;font-size:0.8rem;">
+        Calcul du hash SHA-256 · Vérification de la signature ECDSA · Contrôle d'accréditation…
+      </div>
+    `;
+
+    // Délai simulé (vrai → 2.2s, faux → 1.5s)
+    const diplome = REGISTRE[input.toUpperCase()] || REGISTRE[input];
+    const delay   = diplome ? 2200 : 1500;
+
+    setTimeout(() => {
+      if (diplome) {
+        result.className = 'verify-result success';
+        result.innerHTML = htmlValide(input, diplome);
+      } else {
+        result.className = 'verify-result error';
+        result.innerHTML = htmlInvalide(input);
+      }
+    }, delay);
+  }
+
+  // Vérification au clavier (touche Entrée)
+  document.getElementById('verifyInput').addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') runVerify();
+  });
+
+  // ── Menu hamburger mobile ──
+  function toggleNav() {
+    document.getElementById('navLinks').classList.toggle('open');
+  }
+
+  function closeNav() {
+    document.getElementById('navLinks').classList.remove('open');
+  }
+
+  // Fermer le menu en cliquant en dehors
+  document.addEventListener('click', function(e) {
+    const nav = document.querySelector('nav');
+    if (!nav.contains(e.target)) {
+      closeNav();
+    }
+  });
+</script>
+</body>
+</html>
