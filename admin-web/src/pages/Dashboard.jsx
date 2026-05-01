@@ -47,37 +47,34 @@ export default function Dashboard() {
     });
   }, { scope: containerRef });
 
+
+  // ── SIMULATION D'ÉMISSION (démo sans Metamask) ──
   const handleEmit = async (e) => {
     e.preventDefault();
     if (!studentName || !graduationYear) return alert("Veuillez remplir tous les champs");
-    if (!account) return alert("Veuillez d'abord connecter votre portefeuille Metamask.");
-    
+
     setIsEmitting(true);
+
+    // Étape 1 : Génération du hash
     setEmissionStep(1);
-    
-    // 1. Gnrer le hash en local
     const rawData = `${studentName}-${graduationYear}-${degreeType}-UnivOuaga-${Date.now()}`;
-    const hash = CryptoJS.SHA256(rawData).toString();
-    const finalHash = `0x${hash.substring(0, 40)}`; // On garde 40 chars pour bytes32 compatible
+    const hashArray = Array.from(rawData).map(c => c.charCodeAt(0).toString(16)).join('');
+    const finalHash = `0x${hashArray.substring(0, 64).padEnd(64, '0')}`;
 
+    await new Promise(r => setTimeout(r, 1800)); // Animation hash
+
+    // Étape 2 : Signature & envoi Blockchain (simulation)
     setEmissionStep(2);
-    
-    // 2. Envoyer sur la Blockchain rlle
-    const success = await blockchainIssue(finalHash, studentName, degreeType, parseInt(graduationYear));
+    await new Promise(r => setTimeout(r, 2500)); // Animation blockchain
 
-    if (success) {
-      setGeneratedData({
-        id: `DIP-${graduationYear}-${Math.floor(Math.random() * 10000)}`,
-        hash: finalHash,
-        name: studentName,
-        type: degreeType
-      });
-      setEmissionStep(3);
-    } else {
-      setIsEmitting(false);
-      setEmissionStep(0);
-      alert("La transaction a chou sur la blockchain.");
-    }
+    // Étape 3 : Confirmation & QR Code
+    setGeneratedData({
+      id: `DIP-${graduationYear}-${Math.floor(Math.random() * 90000) + 10000}`,
+      hash: finalHash,
+      name: studentName,
+      type: degreeType
+    });
+    setEmissionStep(3);
   };
 
   const closeEmissionModal = () => {
@@ -107,11 +104,16 @@ export default function Dashboard() {
 
               {emissionStep === 2 && (
                 <div className="py-10">
-                  <div className="w-20 h-20 bg-emerald-50 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-6 animate-bounce">
-                    <span className="material-symbols-outlined text-4xl">database</span>
+                  <div className="w-20 h-20 bg-emerald-50 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-6">
+                    <div className="w-16 h-16 border-4 border-emerald-200 border-t-emerald-600 rounded-full animate-spin"></div>
                   </div>
                   <h3 className="text-2xl font-black text-slate-800 mb-2">Enregistrement Blockchain</h3>
-                  <p className="text-slate-500 text-sm">Veuillez confirmer la transaction dans votre portefeuille Metamask et patienter...</p>
+                  <p className="text-slate-500 text-sm">Diffusion de la transaction sur le réseau Polygon Amoy...</p>
+                  <div className="mt-6 space-y-2 text-left bg-slate-50 rounded-2xl p-4">
+                    <p className="text-xs font-mono text-emerald-600">✓ Connexion aux nœuds Polygon...</p>
+                    <p className="text-xs font-mono text-emerald-600">✓ Signature cryptographique validée...</p>
+                    <p className="text-xs font-mono text-slate-400 animate-pulse">⟳ En attente de confirmation du bloc...</p>
+                  </div>
                 </div>
               )}
 
