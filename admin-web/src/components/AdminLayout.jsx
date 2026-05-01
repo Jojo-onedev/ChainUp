@@ -9,7 +9,7 @@ export default function AdminLayout() {
     { path: '/admin/dashboard', icon: 'space_dashboard', label: 'Tableau de Bord' },
     { path: '/admin/certifications', icon: 'workspace_premium', label: 'Mes Certifications' },
     { path: '/admin/students', icon: 'groups', label: 'Répertoire Étudiants' },
-    { path: '/admin/verify', icon: 'qr_code_scanner', label: 'Vérifier un Diplôme' },
+    { path: '/admin/verify-admin', icon: 'qr_code_scanner', label: 'Vérifier un Diplôme' },
   ];
 
   return (

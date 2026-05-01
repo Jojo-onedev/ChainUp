@@ -278,7 +278,7 @@ export default function LandingPage() {
                         <button id="theme-toggle" className="btn-theme-toggle" aria-label="Changer le thème">
                             <i className="fa-solid fa-moon"></i>
                         </button>
-                        <Link to="/admin/login" className="btn btn-primary-outline">Espace Établissement</Link>
+                        <Link to="/admin/" className="btn btn-primary-outline">Espace Établissement</Link>
                     </div>
                 </div>
                 <nav id="mobile-menu" className="mobile-nav" hidden>
@@ -298,7 +298,7 @@ export default function LandingPage() {
                         <p className="hero-techline">Grâce à la blockchain.</p>
 
                         <div className="hero-buttons">
-                            <a href="#" id="verify-btn" className="btn btn-primary"><i className="fa-solid fa-qrcode"></i> Tester la vérification</a>
+                            <Link to="/verify" className="btn btn-primary"><i className="fa-solid fa-qrcode"></i> Vérifier un Diplôme</Link>
                             <a href="#problem" className="btn btn-secondary">Comprendre le problème</a>
                         </div>
                     </div>

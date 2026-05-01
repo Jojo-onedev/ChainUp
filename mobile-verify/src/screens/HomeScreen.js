@@ -198,7 +198,6 @@ export default function HomeScreen() {
         {/* Bouton Scan QR */}
         <TouchableOpacity onPress={handleScanPress} activeOpacity={0.85}>
           <LinearGradient colors={['#1e40af', '#2563eb']} style={styles.scanBtn}>
-            <Text style={styles.scanBtnIcon}>📷</Text>
             <View>
               <Text style={styles.scanBtnTitle}>Scanner un QR Code</Text>
               <Text style={styles.scanBtnSub}>Utilisez la caméra de votre téléphone</Text>
