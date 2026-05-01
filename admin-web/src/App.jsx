@@ -20,7 +20,7 @@ function App() {
         <Route path="/admin/login" element={<Login />} />
         
         {/* Routes Admin avec Layout (Sidebar commune) */}
-        <Route path="/admin" element={<AdminLayout />}>
+        <Route path="/admin/login" element={<AdminLayout />}>
           <Route index element={<Navigate to="dashboard" replace />} />
           <Route path="dashboard" element={<Dashboard />} />
           <Route path="certifications" element={<Certifications />} />

@@ -4,8 +4,10 @@ import { Link } from 'react-router-dom';
 import gsap from 'gsap';
 import { useGSAP } from '@gsap/react';
 import CryptoJS from 'crypto-js';
+import { useBlockchain } from '../blockchain/useBlockchain';
 
 export default function Dashboard() {
+  const { account, connectWallet, issueDiploma: blockchainIssue, loading: bcLoading } = useBlockchain();
   const [isEmitting, setIsEmitting] = useState(false);
   const [studentName, setStudentName] = useState('');
   const [graduationYear, setGraduationYear] = useState('');
@@ -45,31 +47,37 @@ export default function Dashboard() {
     });
   }, { scope: containerRef });
 
-  const handleEmit = (e) => {
+  const handleEmit = async (e) => {
     e.preventDefault();
     if (!studentName || !graduationYear) return alert("Veuillez remplir tous les champs");
+    if (!account) return alert("Veuillez d'abord connecter votre portefeuille Metamask.");
     
     setIsEmitting(true);
     setEmissionStep(1);
     
-    // Simulate Blockchain Hash generation
-    setTimeout(() => {
-      setEmissionStep(2);
-      
-      // Simulate Polygon network confirmation
-      setTimeout(() => {
-        const rawData = `${studentName}-${graduationYear}-${degreeType}-UnivOuaga-${Date.now()}`;
-        const hash = CryptoJS.SHA256(rawData).toString();
-        
-        setGeneratedData({
-          id: `DIP-${graduationYear}-${Math.floor(Math.random() * 10000)}`,
-          hash: `0x${hash.substring(0, 40)}`,
-          name: studentName,
-          type: degreeType
-        });
-        setEmissionStep(3);
-      }, 2000);
-    }, 2000);
+    // 1. Gnrer le hash en local
+    const rawData = `${studentName}-${graduationYear}-${degreeType}-UnivOuaga-${Date.now()}`;
+    const hash = CryptoJS.SHA256(rawData).toString();
+    const finalHash = `0x${hash.substring(0, 40)}`; // On garde 40 chars pour bytes32 compatible
+
+    setEmissionStep(2);
+    
+    // 2. Envoyer sur la Blockchain rlle
+    const success = await blockchainIssue(finalHash, studentName, degreeType, parseInt(graduationYear));
+
+    if (success) {
+      setGeneratedData({
+        id: `DIP-${graduationYear}-${Math.floor(Math.random() * 10000)}`,
+        hash: finalHash,
+        name: studentName,
+        type: degreeType
+      });
+      setEmissionStep(3);
+    } else {
+      setIsEmitting(false);
+      setEmissionStep(0);
+      alert("La transaction a chou sur la blockchain.");
+    }
   };
 
   const closeEmissionModal = () => {
@@ -82,57 +90,64 @@ export default function Dashboard() {
 
   return (
     <div ref={containerRef} className="flex-1 flex flex-col h-full w-full">
-      {/* --- MODAL D'ÉMISSION (SIMULATION BLOCKCHAIN) --- */}
+      {/* --- MODAL D'MISSION (SIMULATION BLOCKCHAIN) --- */}
       {isEmitting && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4">
-          <div className="bg-white p-8 md:p-10 rounded-3xl max-w-md w-full shadow-2xl shadow-slate-900/20 relative border border-white">
-            {emissionStep < 3 ? (
-              <div className="text-center">
-                <div className="mb-8 relative h-24 flex items-center justify-center">
-                  <div className="absolute inset-0 bg-blue-50 rounded-full scale-150 animate-pulse"></div>
-                  {emissionStep === 1 && <span className="material-symbols-outlined text-6xl text-blue-600 animate-spin relative z-10">fingerprint</span>}
-                  {emissionStep === 2 && <span className="material-symbols-outlined text-6xl text-emerald-500 animate-bounce relative z-10">link</span>}
+          <div className="bg-white rounded-[40px] w-full max-w-lg overflow-hidden shadow-2xl animate-in zoom-in-95 duration-300">
+            <div className="p-10 text-center">
+              {emissionStep === 1 && (
+                <div className="py-10">
+                  <div className="w-20 h-20 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-6 animate-pulse">
+                    <span className="material-symbols-outlined text-4xl">fingerprint</span>
+                  </div>
+                  <h3 className="text-2xl font-black text-slate-800 mb-2">Génération du Hash</h3>
+                  <p className="text-slate-500">Calcul de l'empreinte numérique unique...</p>
                 </div>
-                <h3 className="text-2xl font-extrabold text-slate-800 mb-3">
-                  {emissionStep === 1 ? "Hachage Sécurisé..." : "Enregistrement sur Polygon..."}
-                </h3>
-                <p className="text-sm text-slate-500 font-medium">
-                  {emissionStep === 1 
-                    ? "Cryptage des données de l'étudiant avec l'algorithme SHA-256." 
-                    : "Création du contrat intelligent et validation par les nœuds du réseau."}
-                </p>
-                
-                <div className="w-full h-2 bg-slate-100 rounded-full mt-8 overflow-hidden shadow-inner">
-                  <div className={`h-full bg-gradient-to-r from-blue-500 to-emerald-400 transition-all duration-1000 ${emissionStep === 1 ? 'w-1/3' : 'w-2/3'}`}></div>
+              )}
+
+              {emissionStep === 2 && (
+                <div className="py-10">
+                  <div className="w-20 h-20 bg-emerald-50 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-6 animate-bounce">
+                    <span className="material-symbols-outlined text-4xl">database</span>
+                  </div>
+                  <h3 className="text-2xl font-black text-slate-800 mb-2">Enregistrement Blockchain</h3>
+                  <p className="text-slate-500 text-sm">Veuillez confirmer la transaction dans votre portefeuille Metamask et patienter...</p>
                 </div>
-              </div>
-            ) : (
-              <div className="text-center animate-in fade-in zoom-in duration-500">
-                <div className="mx-auto w-20 h-20 bg-emerald-100 rounded-full flex items-center justify-center mb-6 shadow-lg shadow-emerald-500/20">
-                  <span className="material-symbols-outlined text-5xl text-emerald-600">check_circle</span>
-                </div>
-                <h3 className="text-2xl font-extrabold text-slate-800 mb-2">Diplôme Sécurisé !</h3>
-                <p className="text-sm text-slate-500 mb-6 font-medium">Le certificat a été inscrit de manière immuable sur la blockchain.</p>
-                
-                <div className="bg-slate-50 p-6 rounded-2xl border border-slate-200 mb-8 flex flex-col items-center shadow-inner">
-                  <QRCodeSVG value={`https://verify.diplochain.bf/${generatedData?.id}`} size={140} className="mb-6 p-2 bg-white rounded-xl shadow-sm" />
+              )}
+
+              {emissionStep === 3 && generatedData && (
+                <div className="animate-in fade-in slide-in-from-bottom-4 duration-700">
+                  <div className="w-24 h-24 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-6 shadow-inner">
+                    <span className="material-symbols-outlined text-5xl">verified</span>
+                  </div>
+                  <h3 className="text-3xl font-black text-slate-800 mb-2">Succès !</h3>
+                  <p className="text-slate-500 mb-8">Le diplôme a été certifié sur la blockchain.</p>
                   
-                  <div className="w-full text-left">
-                    <div className="text-xs text-slate-400 font-bold uppercase tracking-wider mb-1">ID Unique du Document</div>
-                    <div className="text-sm font-bold text-slate-800 mb-4 bg-white px-3 py-2 rounded-lg border border-slate-200">{generatedData?.id}</div>
-                    
-                    <div className="text-xs text-slate-400 font-bold uppercase tracking-wider mb-1">Hash de Transaction</div>
-                    <div className="text-[11px] font-mono text-emerald-600 break-all bg-emerald-50 px-3 py-2 rounded-lg border border-emerald-100">
-                      {generatedData?.hash}
+                  <div className="bg-slate-50 rounded-3xl p-6 mb-8 border border-slate-100 text-left">
+                    <div className="flex justify-between items-center mb-4">
+                      <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">ID Certificat</span>
+                      <span className="text-sm font-mono font-bold text-blue-600">{generatedData.id}</span>
+                    </div>
+                    <div className="flex flex-col gap-1 mb-4">
+                      <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">Hash Blockchain</span>
+                      <span className="text-xs font-mono bg-white p-2 rounded-lg border border-slate-200 break-all">{generatedData.hash}</span>
+                    </div>
+                    <div className="flex justify-center">
+                      <div className="p-3 bg-white rounded-2xl shadow-sm border border-slate-100">
+                        <QRCodeSVG value={generatedData.hash} size={120} />
+                      </div>
                     </div>
                   </div>
+
+                  <button 
+                    onClick={closeEmissionModal}
+                    className="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-4 rounded-2xl transition-all shadow-lg shadow-slate-900/20"
+                  >
+                    Fermer le portail
+                  </button>
                 </div>
-                
-                <button onClick={closeEmissionModal} className="w-full bg-slate-800 hover:bg-slate-700 text-white font-bold py-4 rounded-xl transition-all shadow-lg active:scale-95 text-sm">
-                  Retour au tableau de bord
-                </button>
-              </div>
-            )}
+              )}
+            </div>
           </div>
         </div>
       )}
@@ -146,6 +161,19 @@ export default function Dashboard() {
             <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></div>
             <span className="text-xs font-bold text-emerald-700">Polygon Network : Opérationnel</span>
           </div>
+          
+          <button 
+            onClick={connectWallet}
+            className={`flex items-center gap-2 px-4 py-2 rounded-xl font-bold text-sm transition-all ${
+              account 
+                ? 'bg-slate-100 text-slate-700 border border-slate-200' 
+                : 'bg-blue-600 text-white hover:bg-blue-700 shadow-md active:scale-95'
+            }`}
+          >
+            <span className="material-symbols-outlined text-[18px]">account_balance_wallet</span>
+            {account ? `${account.substring(0, 6)}...${account.substring(38)}` : "Connect Wallet"}
+          </button>
+
           <div className="w-px h-8 bg-slate-200"></div>
           <div className="flex items-center gap-3 cursor-pointer">
             <div className="text-right hidden md:block">

@@ -278,7 +278,7 @@ export default function LandingPage() {
                         <button id="theme-toggle" className="btn-theme-toggle" aria-label="Changer le thème">
                             <i className="fa-solid fa-moon"></i>
                         </button>
-                        <Link to="/admin" className="btn btn-primary-outline">Espace Établissement</Link>
+                        <Link to="/admin/login" className="btn btn-primary-outline">Espace Établissement</Link>
                     </div>
                 </div>
                 <nav id="mobile-menu" className="mobile-nav" hidden>

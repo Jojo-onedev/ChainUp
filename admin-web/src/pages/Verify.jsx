@@ -27,19 +27,19 @@ export default function Verify() {
     });
   }, { scope: containerRef });
 
-  const handleVerify = (e) => {
+  const handleVerify = async (e) => {
     e.preventDefault();
     if (!hashInput) return;
     
     setVerifyStatus(1);
-    setTimeout(() => {
-      // Fake verification logic based on input length
-      if (hashInput.length > 10) {
-        setVerifyStatus(2);
-      } else {
-        setVerifyStatus(3);
-      }
-    }, 1500);
+    const result = await verifyDiploma(hashInput);
+    
+    if (result) {
+      setResultData(result);
+      setVerifyStatus(2);
+    } else {
+      setVerifyStatus(3);
+    }
   };
 
   return (
@@ -122,15 +122,19 @@ export default function Verify() {
                   <div className="bg-white p-4 rounded-xl border border-emerald-100 space-y-2">
                     <div className="flex justify-between text-sm">
                       <span className="text-slate-500 font-medium">Titulaire</span>
-                      <span className="font-bold text-slate-800">Traoré Kévin</span>
+                      <span className="font-bold text-slate-800">{resultData?.name}</span>
                     </div>
                     <div className="flex justify-between text-sm">
                       <span className="text-slate-500 font-medium">Diplôme</span>
-                      <span className="font-bold text-slate-800">Licence Professionnelle</span>
+                      <span className="font-bold text-slate-800">{resultData?.degree}</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-slate-500 font-medium">Année</span>
+                      <span className="font-bold text-slate-800">{resultData?.year}</span>
                     </div>
                     <div className="flex justify-between text-sm">
                       <span className="text-slate-500 font-medium">Date d'émission</span>
-                      <span className="font-bold text-slate-800">14 Juin 2024</span>
+                      <span className="font-bold text-slate-800">{resultData?.date}</span>
                     </div>
                   </div>
                 </div>
