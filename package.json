@@ -1,0 +1,10 @@
+{
+  "name": "chainup-root",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "install-admin": "cd admin-web && npm install",
+    "build-admin": "cd admin-web && npm run build",
+    "build": "npm run install-admin && npm run build-admin"
+  }
+}
