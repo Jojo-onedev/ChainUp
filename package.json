@@ -5,6 +5,7 @@
   "scripts": {
     "install-admin": "cd admin-web && npm install",
     "build-admin": "cd admin-web && npm run build",
-    "build": "npm run install-admin && npm run build-admin"
+    "build": "npm run install-admin && npm run build-admin",
+    "start": "npx serve -s admin-web/dist"
   }
 }
