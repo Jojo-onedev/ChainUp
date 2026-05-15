@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import jsQR from 'jsqr';
+import { QRCodeSVG } from 'qrcode.react';
 import { useBlockchain } from '../blockchain/useBlockchain';
 import { Link } from 'react-router-dom';
 
@@ -9,6 +9,26 @@ export default function PublicVerify() {
   const [status, setStatus] = useState('idle'); // idle, loading, success, error
   const { verifyDiploma } = useBlockchain();
   const fileInputRef = useRef(null);
+  const qrRef = useRef(null);
+
+  const downloadQR = () => {
+    const svg = document.getElementById("qr-gen");
+    const svgData = new XMLSerializer().serializeToString(svg);
+    const canvas = document.createElement("canvas");
+    const ctx = canvas.getContext("2d");
+    const img = new Image();
+    img.onload = () => {
+      canvas.width = img.width;
+      canvas.height = img.height;
+      ctx.drawImage(img, 0, 0);
+      const pngFile = canvas.toDataURL("image/png");
+      const downloadLink = document.createElement("a");
+      downloadLink.download = `QRCode_DiploChain_${result.name.replace(' ', '_')}.png`;
+      downloadLink.href = `${pngFile}`;
+      downloadLink.click();
+    };
+    img.src = "data:image/svg+xml;base64," + btoa(svgData);
+  };
 
   const handleVerify = async (e, providedHash) => {
     if (e) e.preventDefault();
@@ -69,7 +89,7 @@ export default function PublicVerify() {
             <span className="material-symbols-outlined text-white">shield_person</span>
           </div>
           <Link to="/" className="text-xl font-extrabold text-slate-800 tracking-tight">
-            DiploChain <span className="text-blue-600 font-black">Verify</span>
+            DiploChain <span className="text-blue-600 font-black">Verification Publique</span>
           </Link>
         </div>
 
@@ -142,7 +162,7 @@ export default function PublicVerify() {
         </div>
 
         {/* RÉSULTATS */}
-        <div className="w-full max-w-2xl mt-12 min-h-[260px]">
+        <div className="w-full max-w-4xl mt-12 min-h-[260px]">
 
           {status === 'loading' && (
             <div className="flex flex-col items-center justify-center py-20">
@@ -156,42 +176,66 @@ export default function PublicVerify() {
               <div className="absolute top-0 right-0 p-8 opacity-10 pointer-events-none">
                 <span className="material-symbols-outlined text-[140px] text-emerald-500">verified</span>
               </div>
-              <div className="relative z-10">
-                <div className="flex items-center gap-4 mb-10">
-                  <div className="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-2xl flex items-center justify-center shadow-inner">
-                    <span className="material-symbols-outlined text-4xl">check_circle</span>
-                  </div>
-                  <div>
-                    <h3 className="text-2xl font-black text-slate-900 uppercase">Diplôme Authentique</h3>
-                    <p className="text-xs font-black text-emerald-600 uppercase tracking-widest">Sécurisé par DiploChain</p>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-y-8 gap-x-12">
-                  {[
-                    { label: 'Titulaire', value: result.name },
-                    { label: 'Année de réussite', value: result.year },
-                    { label: 'Type de certification', value: result.degree },
-                    { label: 'Enregistrement', value: result.date },
-                  ].map(({ label, value }) => (
-                    <div key={label}>
-                      <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">{label}</span>
-                      <span className="text-xl font-bold text-slate-800">{value}</span>
+              
+              <div className="flex flex-col md:flex-row gap-12">
+                <div className="flex-1 relative z-10">
+                  <div className="flex items-center gap-4 mb-10">
+                    <div className="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-2xl flex items-center justify-center shadow-inner">
+                      <span className="material-symbols-outlined text-4xl">check_circle</span>
                     </div>
-                  ))}
+                    <div>
+                      <h3 className="text-2xl font-black text-slate-900 uppercase">Diplôme Authentique</h3>
+                      <p className="text-xs font-black text-emerald-600 uppercase tracking-widest">Sécurisé par DiploChain</p>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-y-8 gap-x-12">
+                    {[
+                      { label: 'Titulaire', value: result.name },
+                      { label: 'Année de réussite', value: result.year },
+                      { label: 'Type de certification', value: result.degree },
+                      { label: 'Enregistrement', value: result.date },
+                    ].map(({ label, value }) => (
+                      <div key={label}>
+                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">{label}</span>
+                        <span className="text-xl font-bold text-slate-800">{value}</span>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="mt-12 pt-8 border-t border-slate-100 flex flex-col md:flex-row justify-between items-center gap-4">
+                    <p className="text-[10px] font-mono text-slate-400">HASH: {hash.substring(0, 24)}...</p>
+                    <a
+                      href={`https://amoy.polygonscan.com/address/0x78b7813df1e6a5907744aff6E4FfA91D8EAf3A9d`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="flex items-center gap-2 px-6 py-3 bg-slate-900 hover:bg-blue-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest transition-all"
+                    >
+                      Audit sur PolygonScan
+                      <span className="material-symbols-outlined text-sm">open_in_new</span>
+                    </a>
+                  </div>
                 </div>
 
-                <div className="mt-12 pt-8 border-t border-slate-100 flex flex-col md:flex-row justify-between items-center gap-4">
-                  <p className="text-[10px] font-mono text-slate-400">HASH: {hash.substring(0, 24)}...</p>
-                  <a
-                    href={`https://amoy.polygonscan.com/address/${hash}`}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="flex items-center gap-2 px-6 py-3 bg-slate-900 hover:bg-blue-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest transition-all"
-                  >
-                    Voir sur PolygonScan
-                    <span className="material-symbols-outlined text-sm">open_in_new</span>
-                  </a>
+                {/* SECTION QR CODE */}
+                <div className="w-full md:w-64 flex flex-col items-center justify-center bg-slate-50 rounded-[32px] p-8 border border-slate-100">
+                   <div className="bg-white p-4 rounded-2xl shadow-sm mb-6">
+                      <QRCodeSVG 
+                        id="qr-gen"
+                        value={hash} 
+                        size={160}
+                        level="H"
+                        includeMargin={false}
+                      />
+                   </div>
+                   <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-6 text-center">QR Code de Validation</p>
+                   <button 
+                    onClick={downloadQR}
+                    className="w-full py-3 bg-white hover:bg-blue-50 text-blue-600 border border-blue-100 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 transition-all shadow-sm"
+                   >
+                     <span className="material-symbols-outlined text-lg">download</span>
+                     Télécharger
+                   </button>
                 </div>
               </div>
             </div>
