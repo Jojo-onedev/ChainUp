@@ -262,9 +262,9 @@ export default function LandingPage() {
         <div className="landing-page">
             <header className="navbar reveal-top">
                 <div className="container nav-content">
-                    <div className="logo">
-                        <i className="fa-solid fa-link"></i> DiploChain
-                    </div>
+                    <Link to="/" className="logo">
+                        DiploChain
+                    </Link>
                     <nav className="nav-links">
                         <a href="#problem">Le Problème</a>
                         <a href="#consequences">Conséquences</a>
@@ -286,6 +286,7 @@ export default function LandingPage() {
                     <a href="#consequences">Conséquences</a>
                     <a href="#solution">La Solution</a>
                     <a href="#how-it-works">Fonctionnement</a>
+                    <Link to="/admin/" className="btn btn-primary-outline" style={{marginTop: '1rem', display: 'block', textAlign: 'center'}}>Espace Établissement</Link>
                 </nav>
             </header>
 
@@ -299,7 +300,7 @@ export default function LandingPage() {
 
                         <div className="hero-buttons">
                             <Link to="/verify" className="btn btn-primary"><i className="fa-solid fa-qrcode"></i> Vérifier un Diplôme</Link>
-                            <a href="#problem" className="btn btn-secondary">Comprendre le problème</a>
+                            <Link to="/graduate" className="btn btn-secondary-outline"><i className="fa-solid fa-user-graduate"></i> Espace Étudiant</Link>
                         </div>
                     </div>
                     <div className="hero-image reveal-right">
@@ -515,7 +516,7 @@ export default function LandingPage() {
                 <div className="container footer-content reveal-up">
                     <h2>Sécurisons l'avenir du Burkina Faso,<br />un diplôme à la fois.</h2>
                     <div className="footer-bottom">
-                        <div className="footer-logo"><i className="fa-solid fa-link"></i> DiploChain</div>
+                        <div className="footer-logo">DiploChain</div>
                         <p>&copy; 2026 Projet MIABEE Hackathon - Blockchain GovTech - Groupe ChainUp - Tous droits réservés.</p>
                     </div>
                 </div>

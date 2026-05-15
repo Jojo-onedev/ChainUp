@@ -56,29 +56,30 @@ Le cœur du système. Contient le Smart Contract `DiploChain.sol` qui enregistre
 
 ---
 
-### 2. `admin-web/` - Portail Université
+### 2. `admin-web/` - Portails Web (React/Vite)
 
-Interface web dédiée aux établissements accrédités pour émettre des diplômes certifiés.
+Interface web hébergeant l'ensemble des portails d'accès de l'écosystème DiploChain.
 
-**Pages disponibles :**
+**Pages et Portails disponibles :**
 
 | Route | Description |
 |-------|-------------|
 | `/` | Landing Page publique DiploChain |
-| `/verify` | Portail de vérification public |
-| `/admin` | Page de connexion université |
-| `/admin/dashboard` | Tableau de bord — émission de diplômes |
-| `/admin/certifications` | Liste des diplômes émis |
-| `/admin/students` | Répertoire des étudiants |
-| `/admin/verify-admin` | Vérification interne |
+| `/verify` | Portail de vérification public par Hash |
+| `/admin` | Page de connexion pour les établissements |
+| `/dashboard` | Tableau de bord Université — émission de diplômes |
+| `/graduate` | **Espace Diplômé** — Coffre-fort numérique personnel |
+| `/minister-secret-access` | **Portail Ministère** — Super-Admin souverain |
 
 **Fonctionnalités clés :**
-- 🔐 Connexion sécurisée par établissement
-- 📝 Formulaire d'émission de diplôme avec simulation blockchain animée
-- 🔗 Génération automatique du Hash cryptographique
-- 📱 QR Code généré après chaque émission
-- 🔍 Vérification publique par hash ou upload d'image QR Code
-- 🌙 Design "Premium Light" avec animations GSAP
+- 🏛️ **Portail Ministère** protégé par clé souveraine pour gérer l'accréditation des universités.
+- 🎓 **Espace Diplômé** (Coffre-fort numérique) pour retrouver et partager ses diplômes certifiés.
+- 🔐 Connexion sécurisée par établissement avec paramètres persistants (`localStorage`).
+- 📝 Formulaire d'émission de diplôme avec état de réussite UI Premium (sans alertes bloquantes).
+- 🔗 Génération automatique du Hash cryptographique et inscription blockchain.
+- 📱 QR Code généré après chaque émission.
+- 🔍 Vérification publique instantanée.
+- 🌙 Design moderne et professionnel avec animations GSAP.
 
 ---
 

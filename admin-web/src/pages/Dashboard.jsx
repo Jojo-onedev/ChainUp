@@ -1,21 +1,32 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { QRCodeSVG } from 'qrcode.react';
-import { Link } from 'react-router-dom';
 import gsap from 'gsap';
 import { useGSAP } from '@gsap/react';
 import { useBlockchain } from '../blockchain/useBlockchain';
 
 export default function Dashboard() {
-  const { account, connectWallet, issueDiploma: blockchainIssue, loading: bcLoading } = useBlockchain();
+  const { account, connectWallet, issueDiploma: blockchainIssue } = useBlockchain();
+  const navigate = useNavigate();
+  const containerRef = useRef(null);
+
   const [isEmitting, setIsEmitting] = useState(false);
-  const [studentID, setStudentID] = useState(''); // Nouveau : Matricule
-  const [studentName, setStudentName] = useState('');
-  const [graduationYear, setGraduationYear] = useState('');
-  const [degreeType, setDegreeType] = useState('Licence Professionnelle');
-  const [emissionStep, setEmissionStep] = useState(0);
+  const [emissionStep, setEmissionStep] = useState(0); 
+  const [issueStatus, setIssueStatus] = useState('idle');
   const [generatedData, setGeneratedData] = useState(null);
 
-  const containerRef = useRef(null);
+  // Sécurité
+  const [isSecurityModalOpen, setIsSecurityModalOpen] = useState(false);
+  const [newPassword, setNewPassword] = useState('');
+
+  // Formulaire
+  const [studentID, setStudentID] = useState('');
+  const [studentName, setStudentName] = useState('');
+  const [graduationYear, setGraduationYear] = useState('2024');
+  const [degreeType, setDegreeType] = useState('Licence Professionnelle');
+
+  // Récupérer les infos de l'université connectée
+  const connectedUniv = JSON.parse(localStorage.getItem('connected_univ') || '{"name": "Espace d\'Émission", "icon": "account_balance"}');
 
   useGSAP(() => {
     gsap.from('.dash-header', { y: -20, opacity: 0, duration: 0.6, ease: 'power3.out' });
@@ -28,192 +39,271 @@ export default function Dashboard() {
     if (!studentName || !graduationYear || !studentID) return alert("Veuillez remplir tous les champs");
 
     setIsEmitting(true);
+    setIssueStatus('processing');
 
-    // Étape 1 : Génération du hash (simulation visuelle)
+    // Étape 1 : Simulation Hash
     setEmissionStep(1);
-    const rawData = `${studentID}-${studentName}-${graduationYear}-${degreeType}-UnivOuaga-${Date.now()}`;
-    // Génération d'un faux hash pour la démo si Metamask n'est pas utilisé, 
-    // sinon le hook utilisera le vrai hash.
-    const hashArray = Array.from(rawData).map(c => c.charCodeAt(0).toString(16)).join('');
-    const finalHash = `0x${hashArray.substring(0, 64).padEnd(64, '0')}`;
+    await new Promise(r => setTimeout(r, 1500));
 
-    await new Promise(r => setTimeout(r, 1800));
-
-    // Étape 2 : Envoi Blockchain (Réel si wallet connecté, sinon Simulation)
+    // Étape 2 : Blockchain
     setEmissionStep(2);
+    const mockHash = `0x${Math.random().toString(16).slice(2)}...${Math.random().toString(16).slice(2)}`;
     
-    let success = false;
-    if (account) {
-      // APPEL RÉEL À LA BLOCKCHAIN
-      success = await blockchainIssue(finalHash, studentID, studentName, degreeType, parseInt(graduationYear));
-    } else {
-      // SIMULATION POUR DÉMO
-      await new Promise(r => setTimeout(r, 2500));
-      success = true;
-    }
+    try {
+      let success = false;
+      let finalHash = mockHash;
 
-    if (success) {
-      setGeneratedData({
-        id: studentID,
-        hash: finalHash,
-        name: studentName,
-        type: degreeType
-      });
-      setEmissionStep(3);
-    } else {
-      alert("L'émission a échoué. Vérifiez votre connexion blockchain.");
+      if (account) {
+        // Envoi réel si wallet connecté
+        const txHash = `0x${studentID.toLowerCase().replace(/[^a-f0-9]/g, '0').padEnd(64, '0')}`;
+        success = await blockchainIssue(txHash, studentID, studentName, degreeType, parseInt(graduationYear));
+        finalHash = txHash;
+      } else {
+        // Simulation pour démo sans wallet
+        await new Promise(r => setTimeout(r, 2000));
+        success = true;
+      }
+
+      if (success) {
+        setGeneratedData({
+          id: studentID,
+          hash: finalHash,
+          name: studentName,
+          type: degreeType
+        });
+        setIssueStatus('success');
+        setEmissionStep(3);
+      } else {
+        setIssueStatus('error');
+        setIsEmitting(false);
+      }
+    } catch (err) {
+      console.error(err);
+      setIssueStatus('error');
       setIsEmitting(false);
     }
   };
 
-  const closeEmissionModal = () => {
+  const resetForm = () => {
+    setIssueStatus('idle');
     setIsEmitting(false);
     setEmissionStep(0);
-    setGeneratedData(null);
     setStudentID('');
     setStudentName('');
-    setGraduationYear('');
+    setGraduationYear('2024');
+    setGeneratedData(null);
+  };
+
+  const handlePasswordChange = () => {
+    if (!newPassword.trim() || newPassword.length < 4) {
+      alert("Le mot de passe doit contenir au moins 4 caractères.");
+      return;
+    }
+
+    const allUnivs = JSON.parse(localStorage.getItem('diplo_universities') || '[]');
+    const updatedUnivs = allUnivs.map(u => {
+      if (u.id === connectedUniv.id) {
+        return { ...u, password: newPassword };
+      }
+      return u;
+    });
+
+    localStorage.setItem('diplo_universities', JSON.stringify(updatedUnivs));
+    
+    // Mettre à jour l'objet courant
+    const updatedConnected = { ...connectedUniv, password: newPassword };
+    localStorage.setItem('connected_univ', JSON.stringify(updatedConnected));
+    
+    setIsSecurityModalOpen(false);
+    setNewPassword('');
+    alert("Mot de passe mis à jour avec succès !");
   };
 
   return (
-    <div ref={containerRef} className="flex-1 flex flex-col h-full w-full">
-      {/* MODAL D'ÉMISSION */}
-      {isEmitting && (
+    <div ref={containerRef} className="flex-1 flex flex-col h-full w-full bg-[#f8fafc]">
+      {/* MODAL DE CHARGEMENT */}
+      {isEmitting && emissionStep < 3 && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4">
-          <div className="bg-white rounded-[40px] w-full max-w-lg overflow-hidden shadow-2xl animate-in zoom-in-95 duration-300">
-            <div className="p-10 text-center">
-              {emissionStep === 1 && (
-                <div className="py-10">
-                  <div className="w-20 h-20 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-6 animate-pulse">
-                    <span className="material-symbols-outlined text-4xl">fingerprint</span>
-                  </div>
-                  <h3 className="text-2xl font-black text-slate-800 mb-2">Génération du Hash</h3>
-                  <p className="text-slate-500">Calcul de l'empreinte numérique unique...</p>
-                </div>
-              )}
-
-              {emissionStep === 2 && (
-                <div className="py-10">
-                  <div className="w-20 h-20 bg-emerald-50 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-6">
-                    <div className="w-16 h-16 border-4 border-emerald-200 border-t-emerald-600 rounded-full animate-spin"></div>
-                  </div>
-                  <h3 className="text-2xl font-black text-slate-800 mb-2">Enregistrement Blockchain</h3>
-                  <p className="text-slate-500 text-sm">Inscription sur le réseau Polygon Amoy...</p>
-                </div>
-              )}
-
-              {emissionStep === 3 && generatedData && (
-                <div className="animate-in fade-in slide-in-from-bottom-4 duration-700">
-                  <div className="w-24 h-24 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-6 shadow-inner">
-                    <span className="material-symbols-outlined text-5xl">verified</span>
-                  </div>
-                  <h3 className="text-3xl font-black text-slate-800 mb-2">Succès !</h3>
-                  <p className="text-slate-500 mb-8">Le diplôme a été certifié sur la blockchain.</p>
-                  <div className="bg-slate-50 rounded-3xl p-6 mb-8 border border-slate-100 text-left">
-                    <div className="flex justify-between items-center mb-4">
-                      <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">Matricule</span>
-                      <span className="text-sm font-mono font-bold text-blue-600">{generatedData.id}</span>
-                    </div>
-                    <div className="flex flex-col gap-1 mb-4">
-                      <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">Hash Blockchain</span>
-                      <span className="text-xs font-mono bg-white p-2 rounded-lg border border-slate-200 break-all">{generatedData.hash}</span>
-                    </div>
-                    <div className="flex justify-center">
-                      <div className="p-3 bg-white rounded-2xl shadow-sm border border-slate-100">
-                        <QRCodeSVG value={generatedData.hash} size={120} />
-                      </div>
-                    </div>
-                  </div>
-                  <button onClick={closeEmissionModal} className="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-4 rounded-2xl transition-all">
-                    Fermer le portail
-                  </button>
-                </div>
-              )}
-            </div>
+          <div className="bg-white rounded-[40px] w-full max-w-sm p-10 text-center shadow-2xl animate-in zoom-in-95">
+             <div className="w-20 h-20 border-4 border-blue-100 border-t-blue-600 rounded-full animate-spin mx-auto mb-6"></div>
+             <h3 className="text-xl font-black text-slate-800 mb-2">
+               {emissionStep === 1 ? 'Génération du Hash...' : 'Inscription Blockchain...'}
+             </h3>
+             <p className="text-slate-500 text-sm">Veuillez patienter quelques instants.</p>
           </div>
         </div>
       )}
 
       {/* TOP BAR */}
       <header className="h-20 bg-white/80 backdrop-blur-md border-b border-slate-200 sticky top-0 z-30 px-8 flex items-center justify-between">
-        <h2 className="text-xl font-extrabold text-slate-800">Espace d'Émission</h2>
-        <div className="flex items-center gap-6">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-blue-500/20">
+            <span className="material-symbols-outlined">{connectedUniv.icon}</span>
+          </div>
+          <h2 className="text-xl font-extrabold text-slate-800 tracking-tight">
+            {connectedUniv.name} <span className="text-slate-400 font-medium ml-2">- Portail Officiel</span>
+          </h2>
+        </div>
+        <div className="flex items-center gap-4">
           <button 
             onClick={connectWallet}
-            className={`flex items-center gap-2 px-4 py-2 rounded-xl font-bold text-sm transition-all ${
-              account ? 'bg-slate-100 text-slate-700 border border-slate-200' : 'bg-blue-600 text-white hover:bg-blue-700 shadow-md'
+            className={`flex items-center gap-2 px-6 py-2.5 rounded-2xl font-black transition-all shadow-lg ${
+              account 
+                ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' 
+                : 'bg-blue-600 text-white hover:bg-blue-700'
             }`}
           >
-            <span className="material-symbols-outlined text-[18px]">account_balance_wallet</span>
-            {account ? `${account.substring(0, 6)}...${account.substring(38)}` : "Connect Wallet"}
+            <span className="material-symbols-outlined text-xl">account_balance_wallet</span>
+            {account ? `${account.substring(0, 6)}...${account.substring(account.length - 4)}` : 'Connecter Wallet'}
+          </button>
+          <button onClick={() => setIsSecurityModalOpen(true)} className="w-11 h-11 bg-slate-100 text-slate-500 rounded-xl flex items-center justify-center hover:bg-blue-50 hover:text-blue-600 transition-all" title="Sécurité">
+            <span className="material-symbols-outlined">security</span>
+          </button>
+          <button onClick={() => navigate('/admin')} className="w-11 h-11 bg-slate-100 text-slate-500 rounded-xl flex items-center justify-center hover:bg-rose-50 hover:text-rose-600 transition-all" title="Déconnexion">
+            <span className="material-symbols-outlined">logout</span>
           </button>
         </div>
       </header>
 
       <div className="p-8 max-w-7xl mx-auto space-y-8 w-full">
-        <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
-          {/* FORMULAIRE D'ÉMISSION */}
-          <div className="xl:col-span-2 bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
-            <div className="p-8 border-b border-slate-100 bg-slate-50/50">
-              <h3 className="text-xl font-extrabold text-slate-800 mb-1 flex items-center gap-2">
-                <span className="material-symbols-outlined text-blue-600">add_card</span>
-                Nouvelle Certification
-              </h3>
+        {/* STATS */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {[
+            { label: 'Total Diplômes', val: '1,254', color: 'blue', icon: 'description' },
+            { label: 'Étudiants Certifiés', val: '892', color: 'indigo', icon: 'group' },
+            { label: 'Authenticité', val: '100%', color: 'emerald', icon: 'verified_user' },
+            { label: 'Alertes Fraude', val: '14', color: 'amber', icon: 'warning' },
+          ].map((s, i) => (
+            <div key={i} className="stat-card bg-white p-6 rounded-[32px] border border-slate-200 shadow-sm">
+              <div className="w-12 h-12 mb-4 rounded-2xl flex items-center justify-center bg-slate-50 text-slate-600">
+                <span className="material-symbols-outlined">{s.icon}</span>
+              </div>
+              <h4 className="text-slate-500 text-xs font-black uppercase tracking-widest mb-1">{s.label}</h4>
+              <p className="text-3xl font-black text-slate-800">{s.val}</p>
             </div>
-            
-            <form onSubmit={handleEmit} className="p-8 space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-sm font-bold text-slate-700 mb-2">Numéro de Matricule</label>
-                  <input 
-                    required type="text" placeholder="Ex: UJKZ-2024-001" 
-                    value={studentID} onChange={(e) => setStudentID(e.target.value)}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 focus:border-blue-500 transition-all font-medium"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-bold text-slate-700 mb-2">Nom & Prénoms</label>
-                  <input 
-                    required type="text" placeholder="Ex: Compaoré Alice" 
-                    value={studentName} onChange={(e) => setStudentName(e.target.value)}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 focus:border-blue-500 transition-all font-medium"
-                  />
-                </div>
-              </div>
+          ))}
+        </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-sm font-bold text-slate-700 mb-2">Année d'obtention</label>
-                  <input 
-                    required type="number" placeholder="2024" 
-                    value={graduationYear} onChange={(e) => setGraduationYear(e.target.value)}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 focus:border-blue-500 transition-all font-medium"
-                  />
+        <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
+          <div className="xl:col-span-2 bg-white rounded-[40px] border border-slate-200 shadow-sm overflow-hidden main-panel">
+            {issueStatus === 'success' ? (
+              <div className="p-16 text-center animate-in zoom-in-95 duration-500">
+                <div className="w-24 h-24 bg-emerald-50 text-emerald-500 rounded-[40px] flex items-center justify-center mb-8 mx-auto shadow-xl shadow-emerald-500/10">
+                  <span className="material-symbols-outlined text-5xl">verified</span>
                 </div>
-                <div>
-                  <label className="block text-sm font-bold text-slate-700 mb-2">Type de diplôme</label>
-                  <select 
-                    value={degreeType} onChange={(e) => setDegreeType(e.target.value)}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 focus:border-blue-500 transition-all font-medium"
-                  >
-                    <option>Licence Professionnelle</option>
-                    <option>Master M1</option>
-                    <option>Master M2</option>
-                    <option>Doctorat</option>
-                  </select>
+                <h3 className="text-4xl font-black text-slate-900 mb-4">Émission Réussie !</h3>
+                <p className="text-slate-500 max-w-md mx-auto mb-10 font-medium">
+                  Le diplôme de <span className="text-slate-900 font-bold">{generatedData?.name}</span> est désormais inscrit sur la blockchain Polygon.
+                </p>
+                <div className="flex gap-4 justify-center">
+                  <button onClick={resetForm} className="bg-slate-900 text-white px-8 py-4 rounded-2xl font-black shadow-xl active:scale-95 transition-all">Émettre un autre</button>
+                  <button onClick={() => navigate('/graduate')} className="bg-slate-100 text-slate-600 px-8 py-4 rounded-2xl font-black hover:bg-slate-200 transition-all">Vérifier sur le Portail</button>
                 </div>
               </div>
+            ) : (
+              <div className="p-10">
+                <h3 className="text-2xl font-black text-slate-800 mb-8 flex items-center gap-3">
+                  <span className="material-symbols-outlined text-blue-600">add_card</span>
+                  Nouvelle Certification
+                </h3>
+                <form onSubmit={handleEmit} className="space-y-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                      <label className="text-xs font-black text-slate-400 uppercase tracking-widest ml-1">Matricule Étudiant</label>
+                      <input required type="text" value={studentID} onChange={(e)=>setStudentID(e.target.value)} className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 font-bold outline-none focus:border-blue-500 transition-all" placeholder="UJKZ-2024-001" />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-xs font-black text-slate-400 uppercase tracking-widest ml-1">Nom Complet</label>
+                      <input required type="text" value={studentName} onChange={(e)=>setStudentName(e.target.value)} className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 font-bold outline-none focus:border-blue-500 transition-all" placeholder="Compaoré Alice" />
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                      <label className="text-xs font-black text-slate-400 uppercase tracking-widest ml-1">Année d'obtention</label>
+                      <input required type="number" value={graduationYear} onChange={(e)=>setGraduationYear(e.target.value)} className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 font-bold outline-none focus:border-blue-500 transition-all" />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-xs font-black text-slate-400 uppercase tracking-widest ml-1">Type de Diplôme</label>
+                      <select value={degreeType} onChange={(e)=>setDegreeType(e.target.value)} className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 font-bold outline-none focus:border-blue-500 transition-all appearance-none">
+                        <option>Licence Professionnelle</option>
+                        <option>Master Spécialisé</option>
+                        <option>Doctorat Unique</option>
+                      </select>
+                    </div>
+                  </div>
+                  <button type="submit" className="w-full bg-blue-600 text-white py-5 rounded-2xl font-black text-lg shadow-xl shadow-blue-600/20 hover:bg-blue-700 transition-all active:scale-95">
+                    Certifier et Inscrire sur la Blockchain
+                  </button>
+                </form>
+              </div>
+            )}
+          </div>
 
-              <div className="pt-6 border-t border-slate-100 flex justify-end">
-                <button type="submit" className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-xl shadow-lg transition-all flex items-center gap-2">
-                  <span className="material-symbols-outlined text-[20px]">send</span>
-                  Générer et Inscrire
-                </button>
-              </div>
-            </form>
+          <div className="bg-slate-900 rounded-[40px] p-8 text-white main-panel shadow-2xl">
+            <h3 className="text-xl text-white mb-6 flex items-center gap-2">
+              <span className="material-symbols-outlined text-blue-400">info</span>
+              Guide de Certification
+            </h3>
+            <div className="space-y-6">
+              {[
+                { t: 'Intégrité', d: 'Chaque diplôme est hashé pour garantir qu\'aucune modification n\'est possible.' },
+                { t: 'Transparence', d: 'Le registre est public et vérifiable par n\'importe quel recruteur.' },
+                { t: 'Souveraineté', d: 'L\'université garde le contrôle total de ses clés de signature.' },
+              ].map((item, idx) => (
+                <div key={idx} className="bg-white/5 p-5 rounded-3xl border border-white/10">
+                  <h4 className="font-black text-blue-400 mb-1">{item.t}</h4>
+                  <p className="text-sm text-slate-400 leading-relaxed">{item.d}</p>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </div>
+
+      {/* MODAL SÉCURITÉ */}
+      {isSecurityModalOpen && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4">
+          <div className="bg-white rounded-[32px] w-full max-w-md p-8 shadow-2xl animate-in fade-in zoom-in-95 duration-200">
+            <div className="flex items-center justify-between mb-6">
+              <div className="w-12 h-12 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center">
+                <span className="material-symbols-outlined text-2xl">lock_reset</span>
+              </div>
+              <button onClick={() => setIsSecurityModalOpen(false)} className="w-10 h-10 bg-slate-50 text-slate-400 rounded-full flex items-center justify-center hover:bg-slate-100 hover:text-slate-600 transition-colors">
+                <span className="material-symbols-outlined">close</span>
+              </button>
+            </div>
+            
+            <h3 className="text-2xl font-black text-slate-800 tracking-tight mb-2">Changer de Mot de Passe</h3>
+            <p className="text-slate-500 text-sm mb-6 leading-relaxed">
+              Modifiez la clé d'accès attribuée par le Ministère pour sécuriser votre portail d'émission.
+            </p>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-bold text-slate-700 mb-2">Nouveau mot de passe</label>
+                <div className="relative">
+                  <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">key</span>
+                  <input 
+                    type="password"
+                    className="w-full pl-12 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl font-medium text-slate-800 focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all"
+                    placeholder="Entrez votre nouveau mot de passe"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                  />
+                </div>
+              </div>
+              
+              <button 
+                onClick={handlePasswordChange}
+                className="w-full py-3.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-lg shadow-blue-500/30 transition-all"
+              >
+                Mettre à jour l'accès
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }

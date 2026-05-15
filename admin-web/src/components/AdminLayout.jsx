@@ -6,11 +6,13 @@ export default function AdminLayout() {
   const currentPath = location.pathname;
 
   const navLinks = [
-    { path: '/admin/dashboard', icon: 'space_dashboard', label: 'Tableau de Bord' },
-    { path: '/admin/certifications', icon: 'workspace_premium', label: 'Mes Certifications' },
-    { path: '/admin/students', icon: 'groups', label: 'Répertoire Étudiants' },
-    { path: '/admin/verify-admin', icon: 'qr_code_scanner', label: 'Vérifier un Diplôme' },
+    { path: '/dashboard', icon: 'space_dashboard', label: 'Tableau de Bord' },
+    { path: '/dashboard/certifications', icon: 'workspace_premium', label: 'Mes Certifications' },
+    { path: '/dashboard/students', icon: 'groups', label: 'Répertoire Étudiants' },
+    { path: '/dashboard/verify-admin', icon: 'qr_code_scanner', label: 'Vérifier un Diplôme' },
   ];
+
+  const connectedUniv = JSON.parse(localStorage.getItem('connected_univ') || '{"name": "Université"}');
 
   return (
     <div className="font-body-md overflow-x-hidden min-h-screen bg-slate-50 text-slate-800 flex">
@@ -26,7 +28,7 @@ export default function AdminLayout() {
               <span className="material-symbols-outlined text-white text-xl">account_balance</span>
             </div>
             <div>
-              <h1 className="font-bold text-xl text-slate-800 tracking-tight leading-tight">Univ. Joseph<br/>Ki-Zerbo</h1>
+              <h1 className="font-bold text-lg text-slate-800 tracking-tight leading-tight">{connectedUniv.name}</h1>
             </div>
           </div>
         </div>

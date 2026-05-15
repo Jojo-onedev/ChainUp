@@ -6,6 +6,7 @@ export default function GraduatePortal() {
   const [studentID, setStudentID] = useState('');
   const [diplomas, setDiplomas] = useState([]);
   const [hasSearched, setHasSearched] = useState(false);
+  const [showToast, setShowToast] = useState(false);
   const { loading, getStudentDiplomas } = useBlockchain();
 
   const handleSearch = async (e) => {
@@ -20,18 +21,24 @@ export default function GraduatePortal() {
   const copyShareLink = (hash) => {
     const link = `${window.location.origin}/verify?hash=${hash}`;
     navigator.clipboard.writeText(link);
-    alert("Lien de vérification copié dans le presse-papier !");
+    setShowToast(true);
+    setTimeout(() => setShowToast(false), 3000);
   };
 
   return (
     <div className="min-h-screen bg-[#f8fafc] text-[#0f172a]">
+      {showToast && (
+        <div className="fixed bottom-8 right-8 bg-[#0f172a] text-white px-6 py-3 rounded-xl shadow-2xl font-bold animate-in fade-in slide-in-from-bottom-4">
+          Lien de vérification copié !
+        </div>
+      )}
       {/* Navbar Minimaliste */}
       <nav className="bg-white border-b border-slate-200 px-6 py-4 flex justify-between items-center sticky top-0 z-10">
         <div className="flex items-center gap-2">
           <div className="w-10 h-10 bg-[#2563eb] rounded-xl flex items-center justify-center shadow-lg shadow-blue-200">
             <ShieldCheck className="text-white" size={24} />
           </div>
-          <span className="font-black text-xl tracking-tight">DiploChain <span className="text-[#2563eb]">Citizen</span></span>
+          <span className="font-black text-xl tracking-tight">DiploChain <span className="text-[#2563eb]">Interface Diplomé</span></span>
         </div>
         <a href="/" className="text-sm font-bold text-slate-600 hover:text-[#2563eb] transition-colors">Retour à l'accueil</a>
       </nav>
