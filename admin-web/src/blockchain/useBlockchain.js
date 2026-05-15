@@ -55,7 +55,8 @@ export const useBlockchain = () => {
   const verifyDiploma = async (hash) => {
     try {
       setLoading(true);
-      const provider = new ethers.BrowserProvider(window.ethereum);
+      // Utilisation d'un provider public pour la vérification (pas besoin de MetaMask)
+      const provider = new ethers.JsonRpcProvider("https://rpc-amoy.polygon.technology");
       const contract = new ethers.Contract(DIPLO_CHAIN_ADDRESS, DIPLO_CHAIN_ABI, provider);
 
       const formattedHash = hash.startsWith('0x') ? hash : `0x${hash}`;

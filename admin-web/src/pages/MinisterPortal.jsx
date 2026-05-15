@@ -109,7 +109,7 @@ export default function MinisterPortal() {
         <div className="absolute top-4 left-0 w-full h-2 bg-emerald-600"></div>
 
         <div className="bg-white rounded-[40px] p-10 w-full max-w-md shadow-2xl text-center relative z-10 border-t-8 border-[#006a32]">
-           <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/9/96/Coat_of_arms_of_Burkina_Faso.svg/1200px-Coat_of_arms_of_Burkina_Faso.svg.png" className="h-24 mx-auto mb-6" alt="Armoiries" />
+           <img src="./armoirie.png" className="h-24 mx-auto mb-6" alt="Armoiries" />
            <h1 className="text-2xl font-black text-slate-900 uppercase tracking-tighter mb-2">Accès Souverain</h1>
            <p className="text-slate-500 text-sm font-medium mb-8">Identification requise pour le personnel ministériel autorisé.</p>
            

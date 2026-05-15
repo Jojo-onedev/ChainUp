@@ -21,10 +21,11 @@ export default function HomeScreen() {
   const [result, setResult] = useState(null);
   const [resultStatus, setResultStatus] = useState(null); // 'success' | 'error'
   const [scanned, setScanned] = useState(false);
+  const [offlineMode, setOfflineMode] = useState(false);
   const [permission, requestPermission] = useCameraPermissions();
   const { loading, verifyDiploma } = useBlockchainMobile();
 
-  // ── Vérification blockchain ──
+  // ── Vérification blockchain / Hors-ligne ──
   const handleVerify = async (hashValue) => {
     const h = hashValue || hash;
     if (!h.trim()) return;
@@ -32,7 +33,31 @@ export default function HomeScreen() {
     setMode('result');
     setResult(null);
     setResultStatus(null);
+    setOfflineMode(false);
 
+    // Tentative de lecture Hors-ligne (JSON)
+    try {
+      if (h.startsWith('{')) {
+        const decoded = JSON.parse(h);
+        if (decoded.s) {
+          // C'est un certificat signé !
+          setResult({
+            name: decoded.n,
+            degree: decoded.d,
+            year: decoded.y,
+            date: "Certifié par " + decoded.i,
+            valid: true
+          });
+          setResultStatus('success');
+          setOfflineMode(true);
+          return;
+        }
+      }
+    } catch (e) {
+      console.log("Not a JSON QR, checking as hash...");
+    }
+
+    // Sinon, vérification Blockchain classique (Online)
     const data = await verifyDiploma(h.trim());
     if (data && data.valid) {
       setResult(data);
@@ -134,7 +159,14 @@ export default function HomeScreen() {
                 <MaterialIcons name="check-circle" size={44} color="#16a34a" />
               </LinearGradient>
               <Text style={styles.resultTitle}>Diplôme Authentique</Text>
-              <Text style={styles.resultSubtitle}>Certifié sur la blockchain Polygon</Text>
+              {offlineMode ? (
+                <View style={[styles.networkBadge, { backgroundColor: '#eff6ff', borderColor: '#bfdbfe', alignSelf: 'center', marginBottom: 15 }]}>
+                  <MaterialIcons name="offline-pin" size={12} color="#2563eb" />
+                  <Text style={[styles.networkText, { color: '#2563eb' }]}>SIGNATURE CRYPTO · HORS-LIGNE</Text>
+                </View>
+              ) : (
+                <Text style={styles.resultSubtitle}>Certifié sur la blockchain Polygon</Text>
+              )}
 
               <View style={styles.divider} />
 

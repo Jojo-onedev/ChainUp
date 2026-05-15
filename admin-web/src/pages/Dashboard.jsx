@@ -65,11 +65,31 @@ export default function Dashboard() {
       }
 
       if (success) {
+        // Génération du contenu hors-ligne (Verifiable Credential)
+        const offlineData = {
+          id: studentID,
+          n: studentName,
+          d: degreeType,
+          y: graduationYear,
+          i: connectedUniv.name,
+          h: finalHash
+        };
+        
+        // Pour la démo, on crée une signature factice mais structurée 
+        // En prod, on utiliserait signer.signMessage(JSON.stringify(offlineData))
+        const signature = `SIG_${btoa(studentID + finalHash).substring(0, 32)}`;
+        
+        const qrContent = JSON.stringify({
+          ...offlineData,
+          s: signature
+        });
+
         setGeneratedData({
           id: studentID,
           hash: finalHash,
           name: studentName,
-          type: degreeType
+          type: degreeType,
+          qrValue: qrContent // On utilise ce contenu riche pour le QR Code
         });
         setIssueStatus('success');
         setEmissionStep(3);
@@ -117,6 +137,25 @@ export default function Dashboard() {
     setIsSecurityModalOpen(false);
     setNewPassword('');
     alert("Mot de passe mis à jour avec succès !");
+  };
+
+  const downloadQR = () => {
+    const svg = document.getElementById("qr-output");
+    const svgData = new XMLSerializer().serializeToString(svg);
+    const canvas = document.createElement("canvas");
+    const ctx = canvas.getContext("2d");
+    const img = new Image();
+    img.onload = () => {
+      canvas.width = img.width;
+      canvas.height = img.height;
+      ctx.drawImage(img, 0, 0);
+      const pngFile = canvas.toDataURL("image/png");
+      const downloadLink = document.createElement("a");
+      downloadLink.download = `Certificat_${generatedData?.id}.png`;
+      downloadLink.href = `${pngFile}`;
+      downloadLink.click();
+    };
+    img.src = "data:image/svg+xml;base64," + btoa(svgData);
   };
 
   return (
@@ -187,17 +226,60 @@ export default function Dashboard() {
         <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
           <div className="xl:col-span-2 bg-white rounded-[40px] border border-slate-200 shadow-sm overflow-hidden main-panel">
             {issueStatus === 'success' ? (
-              <div className="p-16 text-center animate-in zoom-in-95 duration-500">
-                <div className="w-24 h-24 bg-emerald-50 text-emerald-500 rounded-[40px] flex items-center justify-center mb-8 mx-auto shadow-xl shadow-emerald-500/10">
-                  <span className="material-symbols-outlined text-5xl">verified</span>
-                </div>
-                <h3 className="text-4xl font-black text-slate-900 mb-4">Émission Réussie !</h3>
-                <p className="text-slate-500 max-w-md mx-auto mb-10 font-medium">
-                  Le diplôme de <span className="text-slate-900 font-bold">{generatedData?.name}</span> est désormais inscrit sur la blockchain Polygon.
-                </p>
-                <div className="flex gap-4 justify-center">
-                  <button onClick={resetForm} className="bg-slate-900 text-white px-8 py-4 rounded-2xl font-black shadow-xl active:scale-95 transition-all">Émettre un autre</button>
-                  <button onClick={() => navigate('/graduate')} className="bg-slate-100 text-slate-600 px-8 py-4 rounded-2xl font-black hover:bg-slate-200 transition-all">Vérifier sur le Portail</button>
+              <div className="p-12 animate-in fade-in zoom-in-95 duration-500">
+                <div className="flex flex-col md:flex-row gap-10 items-center">
+                  <div className="flex-1">
+                    <div className="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-2xl flex items-center justify-center mb-6 shadow-inner">
+                      <span className="material-symbols-outlined text-4xl">verified</span>
+                    </div>
+                    <h3 className="text-3xl font-black text-slate-900 mb-2">Émission Réussie</h3>
+                    <p className="text-slate-500 font-medium mb-8">Le diplôme a été ancré de manière immuable sur la blockchain.</p>
+                    
+                    <div className="space-y-4 bg-slate-50 p-6 rounded-3xl border border-slate-100">
+                      <div>
+                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Étudiant</span>
+                        <span className="text-lg font-bold text-slate-800">{generatedData?.name}</span>
+                      </div>
+                      <div className="flex gap-8">
+                        <div>
+                          <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Matricule</span>
+                          <span className="font-bold text-slate-800">{generatedData?.id}</span>
+                        </div>
+                        <div>
+                          <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Diplôme</span>
+                          <span className="font-bold text-slate-800">{generatedData?.type}</span>
+                        </div>
+                      </div>
+                      <div>
+                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Empreinte Blockchain (Hash)</span>
+                        <span className="text-[10px] font-mono text-blue-600 break-all bg-blue-50 p-2 rounded-lg block">{generatedData?.hash}</span>
+                      </div>
+                    </div>
+
+                    <div className="flex gap-4 mt-8">
+                      <button onClick={resetForm} className="flex-1 bg-slate-900 text-white py-4 rounded-2xl font-black shadow-xl active:scale-95 transition-all">Nouveau</button>
+                      <button onClick={() => navigate('/graduate')} className="flex-1 bg-slate-100 text-slate-600 py-4 rounded-2xl font-black hover:bg-slate-200 transition-all">Vérifier</button>
+                    </div>
+                  </div>
+
+                  <div className="w-full md:w-64 bg-white border-2 border-slate-100 rounded-[40px] p-8 flex flex-col items-center shadow-2xl">
+                    <div className="bg-white p-3 rounded-2xl shadow-inner mb-4 border border-slate-50">
+                      <QRCodeSVG 
+                        id="qr-output"
+                        value={generatedData?.qrValue || ""} 
+                        size={160}
+                        level="M" 
+                      />
+                    </div>
+                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-6">QR Code Officiel</p>
+                    <button 
+                      onClick={downloadQR}
+                      className="w-full py-3 bg-blue-50 text-blue-600 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-blue-600 hover:text-white transition-all"
+                    >
+                      <span className="material-symbols-outlined text-lg">download</span>
+                      Télécharger
+                    </button>
+                  </div>
                 </div>
               </div>
             ) : (

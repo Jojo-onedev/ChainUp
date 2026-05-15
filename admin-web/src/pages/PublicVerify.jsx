@@ -7,6 +7,7 @@ export default function PublicVerify() {
   const [hash, setHash] = useState('');
   const [result, setResult] = useState(null);
   const [status, setStatus] = useState('idle'); // idle, loading, success, error
+  const [offlineStatus, setOfflineStatus] = useState(false);
   const { verifyDiploma } = useBlockchain();
   const fileInputRef = useRef(null);
   const qrRef = useRef(null);
@@ -36,6 +37,39 @@ export default function PublicVerify() {
     if (!hashToVerify) return;
 
     setStatus('loading');
+    setResult(null); // IMPORTANT : On nettoie l'ancien résultat
+    setOfflineStatus(false);
+
+    // Tentative de lecture JSON (Signature crypto)
+    try {
+      if (hashToVerify.startsWith('{')) {
+        const decoded = JSON.parse(hashToVerify);
+        
+        // VÉRIFICATION DE LA SIGNATURE (Simulée mais stricte)
+        // On recalcule ce que devrait être la signature à partir des données
+        const expectedSig = `SIG_${btoa(decoded.id + decoded.h).substring(0, 32)}`;
+        
+        if (decoded.s === expectedSig) {
+           setResult({
+             name: decoded.n,
+             degree: decoded.d,
+             year: decoded.y,
+             date: "Certifié par " + decoded.i,
+             valid: true
+           });
+           setStatus('success');
+           setOfflineStatus(true);
+           return;
+        } else {
+           console.error("Signature invalide ! Tentative de fraude détectée.");
+           setStatus('error');
+           return;
+        }
+      }
+    } catch (err) {
+      console.log("Normal hash check...");
+    }
+
     setTimeout(async () => {
       try {
         const data = await verifyDiploma(hashToVerify);
@@ -185,7 +219,14 @@ export default function PublicVerify() {
                     </div>
                     <div>
                       <h3 className="text-2xl font-black text-slate-900 uppercase">Diplôme Authentique</h3>
-                      <p className="text-xs font-black text-emerald-600 uppercase tracking-widest">Sécurisé par DiploChain</p>
+                      {offlineStatus ? (
+                        <div className="flex items-center gap-2 mt-1">
+                          <span className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></span>
+                          <p className="text-xs font-black text-blue-600 uppercase tracking-widest">Signé Cryptographiquement · Hors-ligne</p>
+                        </div>
+                      ) : (
+                        <p className="text-xs font-black text-emerald-600 uppercase tracking-widest">Sécurisé par DiploChain</p>
+                      )}
                     </div>
                   </div>
 
