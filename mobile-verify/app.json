@@ -25,7 +25,10 @@
         "backgroundColor": "#0f172a"
       },
       "package": "com.diplochain.verify",
-      "permissions": ["CAMERA"]
+      "permissions": [
+        "CAMERA",
+        "android.permission.CAMERA"
+      ]
     },
     "plugins": [
       [
@@ -34,6 +37,11 @@
           "cameraPermission": "DiploChain a besoin de votre caméra pour scanner les QR Codes des diplômes."
         }
       ]
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "e91dab60-29a5-4681-bbc4-387e9749a7d5"
+      }
+    }
   }
 }
