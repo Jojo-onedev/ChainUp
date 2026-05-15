@@ -7,6 +7,7 @@ import Certifications from './pages/Certifications';
 import Students from './pages/Students';
 import Verify from './pages/Verify';
 import PublicVerify from './pages/PublicVerify';
+import GraduatePortal from './pages/GraduatePortal';
 import AdminLayout from './components/AdminLayout';
 import './App.css';
 
@@ -17,6 +18,7 @@ function App() {
         {/* Routes publiques */}
         <Route path="/" element={<LandingPage />} />
         <Route path="/verify" element={<PublicVerify />} />
+        <Route path="/graduate" element={<GraduatePortal />} />
 
         {/* Page de connexion admin */}
         <Route path="/admin" element={<Login />} />

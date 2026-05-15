@@ -28,31 +28,30 @@ export const useBlockchain = () => {
     }
   }, []);
 
-  // Fonction pour mettre un diplme
-  const issueDiploma = async (hash, name, degree, year) => {
+  // Fonction pour émettre un diplôme (Nouveau : prend le studentID)
+  const issueDiploma = async (hash, studentID, name, degree, year) => {
     try {
       setLoading(true);
       const provider = new ethers.BrowserProvider(window.ethereum);
       const signer = await provider.getSigner();
       const contract = new ethers.Contract(DIPLO_CHAIN_ADDRESS, DIPLO_CHAIN_ABI, signer);
 
-      // Le hash doit tre au format bytes32 (0x...)
       const formattedHash = hash.startsWith('0x') ? hash : `0x${hash}`;
       
-      const tx = await contract.issueDiploma(formattedHash, name, degree, year);
-      await tx.wait(); // Attendre la confirmation de la blockchain
+      const tx = await contract.issueDiploma(formattedHash, studentID, name, degree, year);
+      await tx.wait();
       
       setLoading(false);
       return true;
     } catch (err) {
       console.error(err);
-      setError("Erreur lors de l'mission du diplme.");
+      setError("Erreur lors de l'émission du diplôme.");
       setLoading(false);
       return false;
     }
   };
 
-  // Fonction pour vrifier un diplme (Public)
+  // Fonction pour vérifier un diplôme via son hash
   const verifyDiploma = async (hash) => {
     try {
       setLoading(true);
@@ -64,17 +63,42 @@ export const useBlockchain = () => {
       const result = await contract.verifyDiploma(formattedHash);
       setLoading(false);
       return {
-        name: result[0],
-        degree: result[1],
-        year: Number(result[2]),
-        date: new Date(Number(result[3]) * 1000).toLocaleDateString(),
-        valid: result[4]
+        studentID: result[0],
+        name: result[1],
+        degree: result[2],
+        year: Number(result[3]),
+        date: new Date(Number(result[4]) * 1000).toLocaleDateString(),
+        valid: result[5]
       };
     } catch (err) {
       console.error(err);
-      setError("Diplme non trouv ou hash invalide.");
+      setError("Diplôme non trouvé ou hash invalide.");
       setLoading(false);
       return null;
+    }
+  };
+
+  // Nouvelle fonction : Récupérer tous les diplômes d'un étudiant via son matricule
+  const getStudentDiplomas = async (studentID) => {
+    try {
+      setLoading(true);
+      const provider = new ethers.BrowserProvider(window.ethereum);
+      const contract = new ethers.Contract(DIPLO_CHAIN_ADDRESS, DIPLO_CHAIN_ABI, provider);
+
+      // 1. Récupérer la liste des hashes
+      const hashes = await contract.getStudentDiplomas(studentID);
+      
+      // 2. Récupérer les détails de chaque diplôme en parallèle
+      const detailsPromises = hashes.map(h => verifyDiploma(h));
+      const details = await Promise.all(detailsPromises);
+      
+      setLoading(false);
+      return details.filter(d => d !== null);
+    } catch (err) {
+      console.error(err);
+      setError("Erreur lors de la récupération des diplômes de l'étudiant.");
+      setLoading(false);
+      return [];
     }
   };
 
@@ -84,6 +108,7 @@ export const useBlockchain = () => {
     error,
     connectWallet,
     issueDiploma,
-    verifyDiploma
+    verifyDiploma,
+    getStudentDiplomas
   };
 };

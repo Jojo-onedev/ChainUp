@@ -5,6 +5,7 @@ contract DiploChain {
     address public owner;
 
     struct Diploma {
+        string studentID;    // Nouveau : Matricule de l'etudiant
         string studentName;
         string degreeType;
         uint256 graduationYear;
@@ -12,9 +13,13 @@ contract DiploChain {
         bool isValid;
     }
 
+    // Recherche par Hash (Verification publique)
     mapping(bytes32 => Diploma) public diplomas;
+    
+    // Recherche par Matricule (Espace Diplome)
+    mapping(string => bytes32[]) private studentDiplomas;
 
-    event DiplomaIssued(bytes32 indexed diplomaHash, string studentName, string degreeType);
+    event DiplomaIssued(bytes32 indexed diplomaHash, string studentID, string studentName, string degreeType);
     event DiplomaRevoked(bytes32 indexed diplomaHash);
 
     modifier onlyOwner() {
@@ -28,13 +33,10 @@ contract DiploChain {
 
     /**
      * @dev Enregistre un nouveau diplome sur la blockchain.
-     * @param _hash Le hash unique (SHA-256) genere par le frontend.
-     * @param _name Nom complet de l'etudiant.
-     * @param _degree Type de diplome (Licence, Master, etc.).
-     * @param _year Annee d'obtention.
      */
     function issueDiploma(
         bytes32 _hash,
+        string memory _studentID,
         string memory _name,
         string memory _degree,
         uint256 _year
@@ -42,6 +44,7 @@ contract DiploChain {
         require(!diplomas[_hash].isValid, "This diploma hash is already registered");
 
         diplomas[_hash] = Diploma({
+            studentID: _studentID,
             studentName: _name,
             degreeType: _degree,
             graduationYear: _year,
@@ -49,14 +52,17 @@ contract DiploChain {
             isValid: true
         });
 
-        emit DiplomaIssued(_hash, _name, _degree);
+        // Lier le diplome au matricule pour l'espace diplome
+        studentDiplomas[_studentID].push(_hash);
+
+        emit DiplomaIssued(_hash, _studentID, _name, _degree);
     }
 
     /**
-     * @dev Verifie l'authenticite d'un diplome.
-     * @param _hash Le hash du diplome a verifier.
+     * @dev Verifie l'authenticite d'un diplome via son hash.
      */
     function verifyDiploma(bytes32 _hash) public view returns (
+        string memory studentID,
         string memory name,
         string memory degree,
         uint256 year,
@@ -66,7 +72,15 @@ contract DiploChain {
         Diploma memory d = diplomas[_hash];
         require(d.isValid, "Diploma not found or invalid");
         
-        return (d.studentName, d.degreeType, d.graduationYear, d.issueDate, d.isValid);
+        return (d.studentID, d.studentName, d.degreeType, d.graduationYear, d.issueDate, d.isValid);
+    }
+
+    /**
+     * @dev Recupere tous les hashes de diplomes lies a un matricule.
+     * Utile pour l'interface "Espace Diplome".
+     */
+    function getStudentDiplomas(string memory _studentID) public view returns (bytes32[] memory) {
+        return studentDiplomas[_studentID];
     }
 
     /**
