@@ -15,6 +15,23 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useBlockchainMobile } from '../blockchain/useBlockchainMobile';
 
+// Polyfill btoa pour React Native (nécessaire pour la signature hors-ligne)
+const btoa = (input) => {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=';
+  let str = input;
+  let output = '';
+  for (let block = 0, charCode, i = 0, map = chars;
+    str.charAt(i | 0) || (map = '=', i % 1);
+    output += map.charAt(63 & block >> 8 - i % 1 * 8)) {
+    charCode = str.charCodeAt(i += 3 / 4);
+    if (charCode > 255) {
+      throw new Error("'btoa' failed: The string to be encoded contains characters outside of the Latin1 range.");
+    }
+    block = block << 8 | charCode;
+  }
+  return output;
+};
+
 export default function HomeScreen() {
   const [mode, setMode] = useState('home'); // home | scan | result
   const [hash, setHash] = useState('');
@@ -39,8 +56,13 @@ export default function HomeScreen() {
     try {
       if (h.startsWith('{')) {
         const decoded = JSON.parse(h);
-        if (decoded.s) {
-          // C'est un certificat signé !
+        
+        // VÉRIFICATION DE LA SIGNATURE (Stricte)
+        // On utilise b64 (Buffer/btoa) pour simuler la vérification de l'empreinte
+        const expectedSig = `SIG_${btoa(decoded.id + decoded.h).substring(0, 32)}`;
+        
+        if (decoded.s === expectedSig) {
+          // C'est un certificat signé et authentique !
           setResult({
             name: decoded.n,
             degree: decoded.d,
@@ -50,6 +72,11 @@ export default function HomeScreen() {
           });
           setResultStatus('success');
           setOfflineMode(true);
+          return;
+        } else {
+          // Fraude détectée !
+          console.log("ALERTE : Signature invalide dans le QR Code !");
+          setResultStatus('error');
           return;
         }
       }

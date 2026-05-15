@@ -22,11 +22,12 @@ export const useBlockchainMobile = () => {
 
       setLoading(false);
       return {
-        name: result[0],
-        degree: result[1],
-        year: Number(result[2]),
-        date: new Date(Number(result[3]) * 1000).toLocaleDateString('fr-FR'),
-        valid: result[4]
+        studentID: result.studentID || result[0],
+        name: result.name || result[1],
+        degree: result.degree || result[2],
+        year: Number(result.year || result[3]),
+        date: new Date(Number(result.date || result[4]) * 1000).toLocaleDateString('fr-FR'),
+        valid: result.valid !== undefined ? result.valid : result[5]
       };
     } catch (err) {
       setError("Diplôme non trouvé ou hash invalide.");
